@@ -1,1 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ff7a18">
+<title>MOODCHAT — Chat By Mood</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--text)}
+:root{--bg:#fff8f1;--surface:#fff;--surface2:#fff4e8;--text:#1f2937;--muted:#7b8190;--line:#eee3d7;--accent:#ff7a18;--accent2:#ffb347;--bubble:#ffe8cf;--shadow:0 14px 40px rgba(39,25,10,.10)}
+body[data-mood=flirty]{--bg:#fff3f7;--surface2:#ffe5ef;--accent:#ff4f81;--accent2:#ff8faf;--bubble:#ffdce9}
+body[data-mood=sad]{--bg:#f2f5ff;--surface2:#e4eaff;--accent:#5d78d6;--accent2:#91a5ed;--bubble:#dfe7ff}
+body[data-mood=vexed]{--bg:#fff2f0;--surface2:#ffe3df;--accent:#e94b45;--accent2:#ff7770;--bubble:#ffd9d5}
+body[data-mood=happy]{--bg:#fff8ef;--surface2:#ffead0;--accent:#ff7a18;--accent2:#ffb347;--bubble:#ffe5c4}
+body[data-mood=bored]{--bg:#f8f4ff;--surface2:#eee5ff;--accent:#8064b8;--accent2:#a98ed7;--bubble:#e9ddff}
+body[data-mood=heartbroken]{--bg:#fff3f6;--surface2:#f8dfe8;--accent:#bd4e75;--accent2:#df7898;--bubble:#f5d8e2}
+button,input,select,textarea{font:inherit}button{border:0;cursor:pointer}.hidden{display:none!important}
+.app{min-height:100vh}.auth{min-height:100vh;display:grid;place-items:center;padding:22px;background:radial-gradient(circle at top right,var(--surface2),transparent 42%),var(--bg)}
+.auth-card{width:min(440px,100%);background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:28px;padding:28px;box-shadow:var(--shadow)}
+.logo{display:flex;align-items:center;gap:11px;font-weight:900;font-size:25px}.logo-mark{width:44px;height:44px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;box-shadow:0 10px 24px color-mix(in srgb,var(--accent) 28%,transparent)}
+.auth-card h1{font-size:30px;margin:22px 0 7px}.auth-card p{color:var(--muted);margin:0 0 22px}.tabs{display:grid;grid-template-columns:1fr 1fr;background:#f5f5f5;border-radius:13px;padding:4px;margin-bottom:18px}.tabs button{padding:10px;border-radius:10px;background:transparent;color:#777}.tabs .active{background:#fff;color:#222;box-shadow:0 2px 8px #00000010;font-weight:800}
+.field{margin:12px 0}.field label{display:block;font-size:12px;font-weight:800;margin-bottom:6px;color:#6d7280}.field input,.field select,.composer input{width:100%;border:1px solid var(--line);background:#fff;padding:13px 14px;border-radius:13px;outline:0}.field input:focus,.field select:focus,.composer input:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}
+.primary{width:100%;padding:13px 16px;border-radius:14px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-weight:900;margin-top:7px}.demo{font-size:12px;color:var(--muted);text-align:center;margin-top:12px}
+.topbar{height:64px;position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 14px;gap:10px}
+.menu-btn,.icon-btn{width:40px;height:40px;border-radius:12px;background:var(--surface2);color:var(--text);display:grid;place-items:center;font-size:19px}.brand{font-weight:950;font-size:19px;flex:1}.mood-pill{display:flex;align-items:center;gap:6px;background:var(--surface2);padding:8px 10px;border-radius:999px;font-size:12px;font-weight:900}
+.avatar{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-weight:900;overflow:hidden}.avatar img{width:100%;height:100%;object-fit:cover}
+.shell{max-width:1050px;margin:auto;display:grid;grid-template-columns:235px 1fr;min-height:calc(100vh - 64px)}.sidebar{border-right:1px solid var(--line);padding:18px 12px;background:rgba(255,255,255,.45)}.side-user{padding:13px;background:var(--surface);border:1px solid var(--line);border-radius:18px;margin-bottom:15px}.side-user .row{display:flex;gap:10px;align-items:center}.side-user small{color:var(--muted)}.nav-title{font-size:11px;color:var(--muted);font-weight:900;text-transform:uppercase;padding:10px 10px 6px}.nav button{width:100%;padding:12px;border-radius:13px;background:transparent;text-align:left;color:var(--text);font-weight:800;display:flex;gap:11px;align-items:center}.nav button:hover,.nav button.active{background:var(--surface2);color:var(--accent)}
+.main{min-width:0;padding:16px}.view{display:none}.view.active{display:block}.hero{background:linear-gradient(135deg,var(--surface),var(--surface2));border:1px solid var(--line);border-radius:24px;padding:18px;margin-bottom:13px}.hero-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.hero h2{margin:0 0 4px;font-size:22px}.hero p{margin:0;color:var(--muted);font-size:13px}.online{font-size:12px;color:#2f9e63;font-weight:900}
+.room-card{background:var(--surface);border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 8px 25px #00000008}.room-head{padding:13px 15px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}.room-head strong{flex:1}.feed{height:calc(100vh - 285px);min-height:360px;overflow:auto;padding:15px}.msg{display:flex;gap:9px;margin:13px 0}.msg.me{flex-direction:row-reverse}.msg-bubble{max-width:min(78%,520px)}.name{font-size:11px;font-weight:900;color:var(--muted);margin:0 7px 4px}.me .name{text-align:right}.bubble{background:#f6f7f9;border:1px solid #eceff3;padding:10px 12px;border-radius:17px 17px 17px 5px;line-height:1.4;font-size:14px}.me .bubble{background:var(--bubble);border-color:transparent;border-radius:17px 17px 5px 17px}.bubble img{max-width:240px;border-radius:12px;display:block;margin-top:5px}.reply{font-size:11px;color:var(--accent);font-weight:800;margin-top:4px}.composer{display:flex;gap:7px;padding:10px;border-top:1px solid var(--line);background:var(--surface)}.composer input{flex:1}.send{width:45px;border-radius:13px;background:var(--accent);color:#fff;font-weight:900}.mini{width:42px;border-radius:13px;background:var(--surface2)}
+.typing{height:19px;padding-left:17px;color:var(--muted);font-size:11px;font-weight:700}
+.cards{display:grid;gap:10px}.person{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;display:flex;gap:11px;align-items:center}.person-info{flex:1;min-width:0}.person-info strong{display:block}.person-info small{color:var(--muted)}.person button{background:var(--surface2);color:var(--accent);padding:9px 11px;border-radius:11px;font-weight:900}
+.filters{display:flex;gap:7px;overflow:auto;margin-bottom:12px}.filter{white-space:nowrap;padding:9px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:12px;font-weight:800}.filter.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.rank{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:17px;padding:12px;margin:8px 0}.rank-num{width:30px;text-align:center;font-weight:950}.rank .person-info{flex:1}.points{font-weight:950;color:var(--accent)}
+.profile-card{background:var(--surface);border:1px solid var(--line);border-radius:22px;padding:20px;text-align:center}.profile-big{width:82px;height:82px;border-radius:50%;margin:auto;display:grid;place-items:center;background:linear-gradient(135deg,var(--accent),var(--accent2));color:white;font-size:30px;font-weight:950}.stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:15px}.stat{background:var(--surface2);padding:12px;border-radius:14px}.stat strong{display:block;font-size:18px}.stat small{color:var(--muted)}
+.drawer{position:fixed;inset:0;z-index:50;pointer-events:none}.drawer-bg{position:absolute;inset:0;background:#0007;opacity:0;transition:.2s}.drawer-panel{position:absolute;left:0;top:0;bottom:0;width:min(310px,86vw);background:var(--surface);transform:translateX(-105%);transition:.25s;padding:20px;overflow:auto}.drawer.open{pointer-events:auto}.drawer.open .drawer-bg{opacity:1}.drawer.open .drawer-panel{transform:none}
+.popover{position:fixed;z-index:100;inset:0;background:#0006;display:none;align-items:flex-end;justify-content:center}.popover.open{display:flex}.sheet{width:min(520px,100%);background:var(--surface);border-radius:25px 25px 0 0;padding:18px;max-height:82vh;overflow:auto}.handle{width:42px;height:5px;border-radius:99px;background:#ddd;margin:0 auto 15px}.sheet h3{margin:0 0 14px}.mood-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px}.mood-option{padding:15px;border:1px solid var(--line);background:var(--surface);border-radius:17px;text-align:left;display:flex;gap:10px;align-items:center}.mood-option.selected{border:2px solid var(--accent);background:var(--surface2)}.mood-option b{display:block}.mood-option small{color:var(--muted)}.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:#222;color:#fff;padding:11px 15px;border-radius:13px;font-size:13px;opacity:0;pointer-events:none;transition:.2s;z-index:200}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:760px){.shell{display:block}.sidebar{display:none}.main{padding:10px}.feed{height:calc(100vh - 270px)}.brand{font-size:17px}.mood-pill span{display:none}.hero{border-radius:19px}.stat-grid{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body data-mood="happy">
+<section id="authScreen" class="auth">
+  <div class="auth-card">
+    <div class="logo"><div class="logo-mark">💬</div> MOODCHAT</div>
+    <h1 id="authTitle">Welcome back</h1>
+    <p id="authSub">Talk to people who feel the same way you do.</p>
+    <div class="tabs"><button id="loginTab" class="active">Login</button><button id="signupTab">Create account</button></div>
+    <form id="authForm">
+      <div id="usernameField" class="field hidden"><label>USERNAME</label><input id="username" placeholder="e.g. Abel"></div>
+      <div class="field"><label>EMAIL</label><input id="email" type="email" required placeholder="you@example.com"></div>
+      <div class="field"><label>PASSWORD</label><input id="password" type="password" required placeholder="••••••••"></div>
+      <div id="genderField" class="field hidden"><label>GENDER</label><select id="gender"><option>Male</option><option>Female</option><option>Other</option></select></div>
+      <button class="primary">Continue to MOODCHAT</button>
+    </form>
+    <div class="demo">Demo mode works without Supabase. Connect Supabase in the script for real accounts and realtime chat.</div>
+  </div>
+</section>
 
+<section id="appScreen" class="app hidden">
+<header class="topbar">
+  <button id="menuBtn" class="menu-btn">☰</button>
+  <div class="brand">MOODCHAT</div>
+  <button id="topMood" class="mood-pill"><span>Current mood</span> <b id="topMoodText">🥳 Happy</b></button>
+  <button id="profileBtn" class="avatar">A</button>
+</header>
+
+<div class="shell">
+<aside class="sidebar">
+  <div class="side-user"><div class="row"><div id="sideAvatar" class="avatar">A</div><div><b id="sideName">Abel</b><br><small id="sideMood">🥳 Happy</small></div></div></div>
+  <div class="nav-title">Menu</div>
+  <nav class="nav">
+    <button class="active" data-view="chat">💬 <span>Mood Chat</span></button>
+    <button data-view="messages">✉️ <span>My Messages</span></button>
+    <button data-view="live">🟢 <span>Live People</span></button>
+    <button data-view="leaderboard">🏆 <span>Leaderboard</span></button>
+    <button data-view="profile">👤 <span>Profile</span></button>
+  </nav>
+</aside>
+
+<main class="main">
+<section id="chatView" class="view active">
+  <div class="hero"><div class="hero-top"><div><h2 id="roomTitle">🥳 Happy Room</h2><p id="roomSub">People here are feeling Happy right now.</p></div><div class="online">● <span id="onlineCount">24</span> online</div></div></div>
+  <div class="room-card">
+    <div class="room-head"><span id="roomEmoji">🥳</span><strong>Public Mood Room</strong><button id="changeMoodBtn" class="icon-btn">🎨</button></div>
+    <div id="feed" class="feed"></div><div id="typing" class="typing"></div>
+    <div class="composer"><input id="messageInput" maxlength="1000" placeholder="Say something..."><button id="imageBtn" class="mini">📷</button><button id="sendBtn" class="send">➤</button><input id="imageInput" type="file" accept="image/*" class="hidden"></div>
+  </div>
+</section>
+
+<section id="messagesView" class="view"><div class="hero"><h2>My Messages</h2><p>Your private conversations in one place.</p></div><div id="conversations" class="cards"></div></section>
+<section id="liveView" class="view"><div class="hero"><h2>🟢 Live People</h2><p>Find people currently hanging out by mood.</p></div><div id="liveFilters" class="filters"></div><div id="livePeople" class="cards"></div></section>
+<section id="leaderboardView" class="view"><div class="hero"><h2>🏆 Leaderboard</h2><p>Earn +10 points when you send a message.</p></div><div id="leaderboard"></div></section>
+<section id="profileView" class="view"><div class="hero"><h2>Profile</h2><p>Your mood, points and account details.</p></div><div id="profileCard"></div></section>
+</main>
+</div>
+</section>
+
+<div id="drawer" class="drawer"><div id="drawerBg" class="drawer-bg"></div><div class="drawer-panel">
+  <div class="logo"><div class="logo-mark">💬</div> MOODCHAT</div><div style="height:14px"></div>
+  <div class="side-user"><div class="row"><div id="drawerAvatar" class="avatar">A</div><div><b id="drawerName">Abel</b><br><small>Online now</small></div></div></div>
+  <div class="nav"><button data-view="chat">💬 Mood Chat</button><button data-view="messages">✉️ My Messages</button><button data-view="live">🟢 Live People</button><button data-view="leaderboard">🏆 Leaderboard</button><button data-view="profile">👤 Profile</button><button id="logoutBtn">🚪 Log out</button></div>
+</div></div>
+
+<div id="moodPopover" class="popover"><div class="sheet"><div class="handle"></div><h3>How are you feeling?</h3><p style="color:var(--muted);font-size:13px">Pick a mood. You can change it anytime.</p><div id="moodGrid" class="mood-grid"></div></div></div>
+<div id="privatePopover" class="popover"><div class="sheet"><div class="handle"></div><div id="privateContent"></div></div></div>
+<div id="profilePopover" class="popover"><div class="sheet"><div class="handle"></div><div id="profilePopoverContent"></div></div></div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* =========================
+   MOODCHAT
+   Demo works immediately.
+   For production, fill the Supabase keys below.
+========================= */
+const SUPABASE_URL="YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY";
+let supabaseClient=null;
+if(window.supabase && SUPABASE_URL.startsWith("http") && !SUPABASE_URL.includes("YOUR_")){
+  supabaseClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+}
+const MOODS={
+ flirty:{name:"Flirty",emoji:"😍",color:"#ff4f81",online:18},
+ sad:{name:"Sad",emoji:"😭",color:"#5d78d6",online:11},
+ vexed:{name:"Vexed",emoji:"😡",color:"#e94b45",online:9},
+ happy:{name:"Happy",emoji:"🥳",color:"#ff7a18",online:24},
+ bored:{name:"Bored",emoji:"😴",color:"#8064b8",online:14},
+ heartbroken:{name:"Heartbroken",emoji:"💔",color:"#bd4e75",online:7}
+};
+const people=[
+ {name:"Lina",handle:"@lina",mood:"flirty",gender:"Female",points:640,msg:"Anyone else feeling dangerously happy today? 😍"},
+ {name:"Mark",handle:"@mark",mood:"happy",gender:"Male",points:520,msg:"This room has good energy 😂"},
+ {name:"Sarah",handle:"@sarah",mood:"sad",gender:"Female",points:480,msg:"Sometimes you just need someone to listen."},
+ {name:"David",handle:"@david",mood:"vexed",gender:"Male",points:420,msg:"Today tested my patience 😡"},
+ {name:"Jane",handle:"@jane",mood:"bored",gender:"Female",points:380,msg:"Somebody give me something fun to do 😴"},
+ {name:"Mike",handle:"@mike",mood:"heartbroken",gender:"Male",points:350,msg:"Music is helping tonight."},
+ {name:"Rose",handle:"@rose",mood:"happy",gender:"Female",points:330,msg:"Choose happiness whenever you can 🥳"}
+];
+const state={
+ mode:"login",user:JSON.parse(localStorage.getItem("moodchat_user")||"null"),
+ mood:localStorage.getItem("moodchat_mood")||null,
+ points:+localStorage.getItem("moodchat_points")||320,
+ messages:JSON.parse(localStorage.getItem("moodchat_messages")||"[]"),
+ history:JSON.parse(localStorage.getItem("moodchat_history")||"[]"),
+ privateTarget:null,
+ privateMessages:JSON.parse(localStorage.getItem("moodchat_private")||"{}")
+};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+function toast(t){$("toast").textContent=t;$("toast").classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>$("toast").classList.remove("show"),2200)}
+function mood(){return MOODS[state.mood]||MOODS.happy}
+function initials(n){return String(n||"A").trim().slice(0,1).toUpperCase()}
+function save(){localStorage.setItem("moodchat_user",JSON.stringify(state.user));localStorage.setItem("moodchat_mood",state.mood||"");localStorage.setItem("moodchat_points",state.points);localStorage.setItem("moodchat_messages",JSON.stringify(state.messages));localStorage.setItem("moodchat_history",JSON.stringify(state.history));localStorage.setItem("moodchat_private",JSON.stringify(state.privateMessages))}
+function applyMood(){
+ const m=mood();document.body.dataset.mood=state.mood||"happy";
+ $("topMoodText").textContent=m.emoji+" "+m.name;$("sideMood").textContent=m.emoji+" "+m.name;
+ $("roomTitle").textContent=m.emoji+" "+m.name+" Room";$("roomSub").textContent="People here are feeling "+m.name+" right now.";
+ $("roomEmoji").textContent=m.emoji;$("onlineCount").textContent=m.online;
+ renderFeed();renderLive();renderProfile();
+}
+function renderMoodGrid(){
+ $("moodGrid").innerHTML=Object.entries(MOODS).map(([k,m])=>`<button class="mood-option ${k===state.mood?"selected":""}" data-mood="${k}"><span style="font-size:27px">${m.emoji}</span><span><b>${m.name}</b><small>${m.online} online</small></span></button>`).join("");
+ $("moodGrid").querySelectorAll("[data-mood]").forEach(b=>b.onclick=()=>setMood(b.dataset.mood));
+}
+function setMood(k){
+ state.mood=k;state.history.unshift({mood:k,time:Date.now()});state.history=state.history.slice(0,30);save();applyMood();renderMoodGrid();$("moodPopover").classList.remove("open");toast("Mood changed to "+MOODS[k].name);
+}
+function messageHTML(x){
+ const me=x.me;
+ return `<div class="msg ${me?"me":""}"><div class="avatar">${initials(x.name)}</div><div class="msg-bubble"><div class="name">${esc(x.name)} ${MOODS[x.mood]?MOODS[x.mood].emoji:""} ${me?"":"· "+esc(x.handle||"")}</div><div class="bubble">${x.image?`<img src="${x.image}" alt="shared image">`:""}${x.text?esc(x.text):""}${x.reply?`<div class="reply">↪ ${esc(x.reply)}</div>`:""}</div></div></div>`;
+}
+function seedMessages(){
+ if(state.messages.length)return;
+ const m=mood();state.messages=[
+  {name:"Mark",handle:"@mark",mood:state.mood,text:m.name==="Happy"?"This room has such a good vibe 😂":"Hey everyone, how are you feeling?",me:false},
+  {name:"Lina",handle:"@lina",mood:state.mood,text:"I like this idea. People can just be honest here.",me:false},
+  {name:state.user?.username||"Abel",handle:"@me",mood:state.mood,text:"Just joined 👋",me:true}
+ ];save();
+}
+function renderFeed(){
+ seedMessages();
+ const room=state.messages.filter(x=>!x.mood||x.mood===state.mood);
+ $("feed").innerHTML=room.map(messageHTML).join("");
+ $("feed").scrollTop=$("feed").scrollHeight;
+}
+function sendPublic(text,image=null){
+ if(!text.trim()&&!image)return;
+ const x={name:state.user.username,handle:"@"+state.user.username.toLowerCase().replace(/\s+/g,""),mood:state.mood,text:text.trim(),image,me:true,at:Date.now()};
+ state.messages.push(x);state.points+=10;save();renderFeed();$("messageInput").value="";$("typing").textContent="";toast("+10 points");
+ if(supabaseClient){supabaseClient.from("mood_messages").insert({username:x.name,mood:state.mood,text:x.text,image_base64:x.image||null}).catch(()=>{})}
+}
+function renderConversations(){
+ const arr=people.slice(0,5);
+ $("conversations").innerHTML=arr.map(p=>`<div class="person"><div class="avatar">${initials(p.name)}</div><div class="person-info"><strong>${esc(p.name)} ${MOODS[p.mood].emoji}</strong><small>${esc(p.msg)}</small></div><button data-person="${p.handle}">Chat</button></div>`).join("");
+ $("conversations").querySelectorAll("[data-person]").forEach(b=>b.onclick=()=>openPrivate(people.find(p=>p.handle===b.dataset.person)));
+}
+function openPrivate(p){
+ state.privateTarget=p;
+ const mine=state.privateMessages[p.handle]||[];
+ $("privateContent").innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:14px"><div class="avatar">${initials(p.name)}</div><div><h3 style="margin:0">${esc(p.name)} ${MOODS[p.mood].emoji}</h3><small style="color:#2f9e63">● Online</small></div></div>
+ <div style="background:var(--surface2);border-radius:15px;padding:10px;font-size:12px;font-weight:800;text-align:center;margin-bottom:10px">You: ${mood().emoji} + ${p.name}: ${MOODS[p.mood].emoji} = Perfect Match!</div>
+ <div id="privateFeed" class="feed" style="height:300px;background:var(--bg);border-radius:15px">${mine.map(x=>messageHTML(x)).join("")}</div>
+ <div class="composer"><input id="privateInput" placeholder="Message ${esc(p.name)}..."><button id="privateSend" class="send">➤</button></div>`;
+ $("privatePopover").classList.add("open");
+ $("privateSend").onclick=()=>sendPrivate($("privateInput").value);
+ $("privateInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendPrivate(e.target.value)});
+}
+function sendPrivate(text){
+ if(!text.trim()||!state.privateTarget)return;
+ const p=state.privateTarget,k=p.handle;
+ state.privateMessages[k]=state.privateMessages[k]||[];
+ state.privateMessages[k].push({name:state.user.username,handle:"@me",mood:state.mood,text:text.trim(),me:true});
+ state.points+=10;save();openPrivate(p);toast("Private message sent");
+}
+function renderLive(){
+ const keys=["all",...Object.keys(MOODS)];$("liveFilters").innerHTML=keys.map(k=>`<button class="filter ${k==="all"?"active":""}" data-filter="${k}">${k==="all"?"All":MOODS[k].emoji+" "+MOODS[k].name}</button>`).join("");
+ let filter="all";
+ const draw=()=>{$("livePeople").innerHTML=people.filter(p=>filter==="all"||p.mood===filter).map(p=>`<div class="person"><div class="avatar">${initials(p.name)}</div><div class="person-info"><strong>${esc(p.name)} ${MOODS[p.mood].emoji}</strong><small>${esc(p.handle)} · ${MOODS[p.mood].name} · ● online</small></div><button data-chat="${p.handle}">Chat</button></div>`).join("");$("livePeople").querySelectorAll("[data-chat]").forEach(b=>b.onclick=()=>openPrivate(people.find(p=>p.handle===b.dataset.chat)))};
+ $("liveFilters").querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{filter=b.dataset.filter;$("liveFilters").querySelectorAll(".filter").forEach(x=>x.classList.remove("active"));b.classList.add("active");draw()});draw();
+}
+function renderLeaderboard(){
+ const me={name:state.user?.username||"Abel",handle:"@me",points:state.points,mood:state.mood};
+ const all=[me,...people].sort((a,b)=>b.points-a.points);
+ $("leaderboard").innerHTML=all.map((p,i)=>`<div class="rank"><div class="rank-num">${i+1}</div><div class="avatar">${initials(p.name)}</div><div class="person-info"><strong>${esc(p.name)} ${MOODS[p.mood]?.emoji||"🥳"}</strong><small>${p.handle||"@user"}</small></div><div class="points">${p.points} pts</div></div>`).join("");
+}
+function renderProfile(){
+ const u=state.user||{username:"Abel",email:"demo@moodchat.app",gender:"Male"};
+ $("sideName").textContent=u.username;$("drawerName").textContent=u.username;
+ $("sideAvatar").textContent=initials(u.username);$("drawerAvatar").textContent=initials(u.username);$("profileBtn").textContent=initials(u.username);
+ $("profileCard").innerHTML=`<div class="profile-card"><div class="profile-big">${initials(u.username)}</div><h2 style="margin:12px 0 3px">${esc(u.username)}</h2><p style="color:var(--muted);margin:0">${esc(u.email)}</p><div style="margin:12px auto;background:var(--surface2);padding:9px;border-radius:12px;width:max-content;font-weight:900">${mood().emoji} ${mood().name}</div><div class="stat-grid"><div class="stat"><strong>${state.points}</strong><small>Points</small></div><div class="stat"><strong>${state.history.length}</strong><small>Mood changes</small></div><div class="stat"><strong>${people.length+1}</strong><small>Friends</small></div></div><button id="profileMood" class="primary" style="margin-top:15px">Change my mood</button></div>`;
+ $("profileMood").onclick=()=>openMood();
+}
+function switchView(v){
+ document.querySelectorAll(".view").forEach(x=>x.classList.remove("active"));$(v+"View").classList.add("active");
+ document.querySelectorAll(".nav button[data-view]").forEach(x=>x.classList.toggle("active",x.dataset.view===v));
+ $("drawer").classList.remove("open");if(v==="messages")renderConversations();if(v==="leaderboard")renderLeaderboard();if(v==="live")renderLive();if(v==="profile")renderProfile();
+}
+function openMood(){renderMoodGrid();$("moodPopover").classList.add("open")}
+function showApp(){ $("authScreen").classList.add("hidden");$("appScreen").classList.remove("hidden");applyMood();renderMoodGrid();if(!state.mood)openMood()}
+function showAuth(){ $("appScreen").classList.add("hidden");$("authScreen").classList.remove("hidden")}
+function authSubmit(e){
+ e.preventDefault();
+ const email=$("email").value.trim(),password=$("password").value;
+ if(!email||password.length<4)return toast("Enter a valid email and password");
+ const username=state.mode==="signup"?$("username").value.trim()||"User":(state.user?.username||email.split("@")[0]);
+ state.user={username,email,gender:$("gender").value};save();
+ if(!state.mood)openMood();showApp();
+}
+function setAuthMode(mode){
+ state.mode=mode;const signup=mode==="signup";$("loginTab").classList.toggle("active",!signup);$("signupTab").classList.toggle("active",signup);$("usernameField").classList.toggle("hidden",!signup);$("genderField").classList.toggle("hidden",!signup);$("authTitle").textContent=signup?"Create your account":"Welcome back";$("authSub").textContent=signup?"Pick a mood and meet people who feel the same.":"Talk to people who feel the same way you do.";
+}
+$("loginTab").onclick=()=>setAuthMode("login");$("signupTab").onclick=()=>setAuthMode("signup");$("authForm").onsubmit=authSubmit;
+$("sendBtn").onclick=()=>sendPublic($("messageInput").value);$("messageInput").addEventListener("keydown",e=>{if(e.key==="Enter")sendPublic(e.target.value);else $("typing").textContent=e.target.value?"Typing…":""});
+$("imageBtn").onclick=()=>$("imageInput").click();
+$("imageInput").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>sendPublic("",r.result);r.readAsDataURL(f);e.target.value=""};
+$("topMood").onclick=openMood;$("changeMoodBtn").onclick=openMood;$("profileBtn").onclick=()=>{$("profilePopoverContent").innerHTML=$("profileCard").innerHTML;$("profilePopover").classList.add("open")};
+document.querySelectorAll(".popover").forEach(p=>p.addEventListener("click",e=>{if(e.target===p)p.classList.remove("open")}));
+$("menuBtn").onclick=()=>$("drawer").classList.add("open");$("drawerBg").onclick=()=>$("drawer").classList.remove("open");
+document.querySelectorAll("[data-view]").forEach(b=>b.onclick=()=>switchView(b.dataset.view));
+$("logoutBtn").onclick=()=>{state.user=null;save();showAuth();toast("Logged out")};
+if(state.user)showApp();else showAuth();
+if(!state.user){$("email").value="demo@moodchat.app";$("password").value="1234"}
+</script>
+</body>
+</html>
