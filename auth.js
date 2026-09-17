@@ -8,14 +8,31 @@
 // ============================================================
 
 const firebaseConfig = {
-  apiKey: "AIzaSyByPYENG0Mcb7DA6VRD5znTFGdGdvX-U0E",
-  authDomain: "moodchat-c8acf.firebaseapp.com",
-  databaseURL: "https://moodchat-c8acf-default-rtdb.firebaseio.com",
-  projectId: "moodchat-c8acf",
-  storageBucket: "moodchat-c8acf.firebasestorage.app",
-  messagingSenderId: "175563017140",
-  appId: "1:175563017140:web:5c2bf6cbf9896363fc00e1",
-  measurementId: "G-52548DKTVH"
+
+  apiKey:
+    "AIzaSyByPYngE0Mcb7DA6VRD5znTFGdGdvX-U0E",
+
+  authDomain:
+    "moodchat-c8acf.firebaseapp.com",
+
+  databaseURL:
+    "https://moodchat-c8acf-default-rtdb.firebaseio.com",
+
+  projectId:
+    "moodchat-c8acf",
+
+  storageBucket:
+    "moodchat-c8acf.firebasestorage.app",
+
+  messagingSenderId:
+    "175563017140",
+
+  appId:
+    "1:175563017140:web:5c2bf6cbf9896363fc00e1",
+
+  measurementId:
+    "G-52548DKTVH"
+
 };
 
 
@@ -24,11 +41,19 @@ const firebaseConfig = {
 // ============================================================
 
 if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
+
+  firebase.initializeApp(
+    firebaseConfig
+  );
+
 }
 
-const auth = firebase.auth();
-const db = firebase.firestore();
+const auth =
+  firebase.auth();
+
+const db =
+  firebase.firestore();
+
 
 console.log(
   "MOODCHAT Firebase initialized successfully."
@@ -39,11 +64,12 @@ console.log(
 // HELPERS
 // ============================================================
 
-const $ = (id) => {
-  return document.getElementById(id);
-};
+const $ = (id) =>
+  document.getElementById(id);
 
-let authMode = "login";
+
+let authMode =
+  "login";
 
 
 // ============================================================
@@ -52,15 +78,19 @@ let authMode = "login";
 
 function showToast(message) {
 
-  const toast = $("toast");
+  const toast =
+    $("toast");
 
   if (!toast) {
     return;
   }
 
-  toast.textContent = message;
+  toast.textContent =
+    message;
 
-  toast.classList.add("show");
+  toast.classList.add(
+    "show"
+  );
 
   clearTimeout(
     window.__moodchatToastTimer
@@ -69,9 +99,28 @@ function showToast(message) {
   window.__moodchatToastTimer =
     setTimeout(() => {
 
-      toast.classList.remove("show");
+      toast.classList.remove(
+        "show"
+      );
 
     }, 2500);
+
+}
+
+
+// ============================================================
+// GO TO HOMEPAGE
+// ============================================================
+
+function goToHomepage() {
+
+  console.log(
+    "MOODCHAT: Redirecting to Homepage.html"
+  );
+
+  window.location.href =
+    "./Homepage.html";
+
 }
 
 
@@ -81,21 +130,19 @@ function showToast(message) {
 
 function setAuthMode(mode) {
 
-  authMode = mode;
+  authMode =
+    mode;
 
   const signup =
     mode === "signup";
 
-
-  // ==========================================================
-  // TABS
-  // ==========================================================
 
   const loginTab =
     $("loginTab");
 
   const signupTab =
     $("signupTab");
+
 
   if (loginTab) {
 
@@ -106,6 +153,7 @@ function setAuthMode(mode) {
 
   }
 
+
   if (signupTab) {
 
     signupTab.classList.toggle(
@@ -115,10 +163,6 @@ function setAuthMode(mode) {
 
   }
 
-
-  // ==========================================================
-  // USERNAME FIELD
-  // ==========================================================
 
   const usernameField =
     $("usernameField");
@@ -133,10 +177,6 @@ function setAuthMode(mode) {
   }
 
 
-  // ==========================================================
-  // GENDER FIELD
-  // ==========================================================
-
   const genderField =
     $("genderField");
 
@@ -150,26 +190,18 @@ function setAuthMode(mode) {
   }
 
 
-  // ==========================================================
-  // BUTTON TEXT
-  // ==========================================================
-
-  const submitButton =
+  const button =
     $("authSubmitBtn");
 
-  if (submitButton) {
+  if (button) {
 
-    submitButton.textContent =
+    button.textContent =
       signup
         ? "Create Account"
         : "Login";
 
   }
 
-
-  // ==========================================================
-  // DESCRIPTION
-  // ==========================================================
 
   const authSub =
     $("authSub");
@@ -197,62 +229,67 @@ async function createUserProfile(
 ) {
 
   if (!user) {
+
     throw new Error(
-      "No authenticated user."
+      "No Firebase user."
     );
+
   }
 
 
-  const profileRef =
-    db
-      .collection("profiles")
-      .doc(user.uid);
+  await db
+    .collection("profiles")
+    .doc(user.uid)
+    .set({
+
+      uid:
+        user.uid,
+
+      username:
+        username || "User",
+
+      email:
+        user.email || "",
+
+      gender:
+        gender || "",
+
+      current_mood:
+        null,
+
+      points:
+        0,
+
+      rank:
+        0,
+
+      photoURL:
+        "",
+
+      createdAt:
+        firebase.firestore.FieldValue
+          .serverTimestamp(),
+
+      updatedAt:
+        firebase.firestore.FieldValue
+          .serverTimestamp()
+
+    }, {
+
+      merge: true
+
+    });
 
 
-  await profileRef.set({
-
-    uid: user.uid,
-
-    username:
-      username || "User",
-
-    email:
-      user.email || "",
-
-    gender:
-      gender || "",
-
-    current_mood:
-      null,
-
-    points:
-      0,
-
-    rank:
-      0,
-
-    photoURL:
-      "",
-
-    createdAt:
-      firebase.firestore.FieldValue
-        .serverTimestamp(),
-
-    updatedAt:
-      firebase.firestore.FieldValue
-        .serverTimestamp()
-
-  }, {
-
-    merge: true
-
-  });
+  console.log(
+    "MOODCHAT profile created."
+  );
 
 }
 
 
 // ============================================================
-// FIREBASE ERROR MESSAGE
+// ERROR MESSAGE
 // ============================================================
 
 function getAuthErrorMessage(code) {
@@ -301,7 +338,7 @@ function getAuthErrorMessage(code) {
 
     case "auth/operation-not-allowed":
 
-      return "Email and password sign-in is not enabled in Firebase.";
+      return "Email and password authentication is not enabled.";
 
 
     case "auth/api-key-not-valid":
@@ -327,16 +364,15 @@ function getAuthErrorMessage(code) {
 // LOGIN TAB
 // ============================================================
 
-const loginTab =
-  $("loginTab");
+if ($("loginTab")) {
 
-if (loginTab) {
-
-  loginTab.addEventListener(
+  $("loginTab").addEventListener(
     "click",
     () => {
 
-      setAuthMode("login");
+      setAuthMode(
+        "login"
+      );
 
     }
   );
@@ -348,16 +384,15 @@ if (loginTab) {
 // SIGNUP TAB
 // ============================================================
 
-const signupTab =
-  $("signupTab");
+if ($("signupTab")) {
 
-if (signupTab) {
-
-  signupTab.addEventListener(
+  $("signupTab").addEventListener(
     "click",
     () => {
 
-      setAuthMode("signup");
+      setAuthMode(
+        "signup"
+      );
 
     }
   );
@@ -366,15 +401,12 @@ if (signupTab) {
 
 
 // ============================================================
-// LOGIN / SIGN UP FORM
+// AUTH FORM
 // ============================================================
 
-const authForm =
-  $("authForm");
+if ($("authForm")) {
 
-if (authForm) {
-
-  authForm.addEventListener(
+  $("authForm").addEventListener(
     "submit",
     async (event) => {
 
@@ -382,7 +414,7 @@ if (authForm) {
 
 
       // ======================================================
-      // GET FORM VALUES
+      // VALUES
       // ======================================================
 
       const email =
@@ -420,7 +452,7 @@ if (authForm) {
 
 
       // ======================================================
-      // BASIC VALIDATION
+      // VALIDATION
       // ======================================================
 
       if (!email) {
@@ -486,11 +518,12 @@ if (authForm) {
       }
 
 
-      button.disabled = true;
-
-
-      const oldText =
+      const originalText =
         button.textContent;
+
+
+      button.disabled =
+        true;
 
 
       button.textContent =
@@ -500,7 +533,7 @@ if (authForm) {
 
 
       // ======================================================
-      // FIREBASE AUTHENTICATION
+      // FIREBASE
       // ======================================================
 
       try {
@@ -532,21 +565,35 @@ if (authForm) {
           }
 
 
-          // ==================================================
-          // CREATE FIRESTORE PROFILE
-          // ==================================================
-
-          await createUserProfile(
-            user,
-            username,
-            gender
-          );
-
-
           console.log(
             "MOODCHAT account created:",
             user.uid
           );
+
+
+          // ==================================================
+          // CREATE PROFILE
+          // ==================================================
+
+          try {
+
+            await createUserProfile(
+              user,
+              username,
+              gender
+            );
+
+          } catch (profileError) {
+
+            console.error(
+              "Profile creation error:",
+              profileError
+            );
+
+            // Account already exists in Firebase Auth.
+            // Homepage can create/load the profile later.
+
+          }
 
 
           showToast(
@@ -554,8 +601,15 @@ if (authForm) {
           );
 
 
-          // Firebase auth state listener
-          // will redirect to Homepage.html.
+          // ==================================================
+          // REDIRECT
+          // ==================================================
+
+          setTimeout(() => {
+
+            goToHomepage();
+
+          }, 300);
 
         }
 
@@ -594,8 +648,15 @@ if (authForm) {
           );
 
 
-          // Firebase auth state listener
-          // will redirect to Homepage.html.
+          // ==================================================
+          // REDIRECT IMMEDIATELY
+          // ==================================================
+
+          setTimeout(() => {
+
+            goToHomepage();
+
+          }, 300);
 
         }
 
@@ -629,10 +690,11 @@ if (authForm) {
 
       finally {
 
-        button.disabled = false;
+        button.disabled =
+          false;
 
         button.textContent =
-          oldText;
+          originalText;
 
       }
 
@@ -643,15 +705,11 @@ if (authForm) {
 
 
 // ============================================================
-// CHECK LOGIN STATE
+// CHECK EXISTING LOGIN
 // ============================================================
 
 auth.onAuthStateChanged(
-  async (user) => {
-
-    // ========================================================
-    // NOT LOGGED IN
-    // ========================================================
+  (user) => {
 
     if (!user) {
 
@@ -664,108 +722,19 @@ auth.onAuthStateChanged(
     }
 
 
-    // ========================================================
-    // USER IS LOGGED IN
-    // ========================================================
-
     console.log(
-      "MOODCHAT: User is signed in:",
+      "MOODCHAT: Existing login detected:",
       user.uid
     );
 
+    /*
+      IMPORTANT:
 
-    try {
+      We do NOT query Firestore here.
 
-      // ======================================================
-      // GET PROFILE
-      // ======================================================
-
-      const profileRef =
-        db
-          .collection("profiles")
-          .doc(user.uid);
-
-
-      const profile =
-        await profileRef.get();
-
-
-      // ======================================================
-      // PROFILE DOES NOT EXIST
-      // ======================================================
-
-      if (!profile.exists) {
-
-        const fallbackUsername =
-          user.email
-            ? user.email
-                .split("@")[0]
-            : "User";
-
-
-        await createUserProfile(
-          user,
-          fallbackUsername,
-          ""
-        );
-
-
-        console.log(
-          "MOODCHAT: Missing profile created."
-        );
-
-      }
-
-
-      // ======================================================
-      // GO TO HOMEPAGE
-      // ======================================================
-
-      console.log(
-        "MOODCHAT: Opening Homepage.html..."
-      );
-
-
-      window.location.replace(
-        "Homepage.html"
-      );
-
-    }
-
-
-    // ========================================================
-    // PROFILE ERROR
-    // ========================================================
-
-    catch (error) {
-
-      console.error(
-        "MOODCHAT profile loading error:",
-        error
-      );
-
-
-      showToast(
-        "Could not load your profile."
-      );
-
-
-      try {
-
-        await auth.signOut();
-
-      }
-
-      catch (signOutError) {
-
-        console.error(
-          "MOODCHAT sign-out error:",
-          signOutError
-        );
-
-      }
-
-    }
+      This prevents a Firestore/profile problem
+      from stopping the user from opening Homepage.html.
+    */
 
   }
 );
@@ -781,7 +750,7 @@ setAuthMode(
 
 
 // ============================================================
-// DEBUG MESSAGE
+// DEBUG
 // ============================================================
 
 console.log(

@@ -10,7 +10,7 @@
 // ============================================================
 
 const firebaseConfig = {
-  apiKey: "AIzaSyByPYENG0mE0M0",
+  apiKey: "AIzaSyByPYngE0Mcb7DA6VRD5znTFGdGdvX-U0E",
   authDomain: "moodchat-c8acf.firebaseapp.com",
   databaseURL: "https://moodchat-c8acf-default-rtdb.firebaseio.com",
   projectId: "moodchat-c8acf",
@@ -120,7 +120,7 @@ const state = {
 // HELPERS
 // ============================================================
 
-const $ = (id) =>
+const $ = id =>
   document.getElementById(id);
 
 
@@ -138,7 +138,9 @@ function escapeHTML(value) {
 
 function formatTime(timestamp) {
 
-  if (!timestamp) return "";
+  if (!timestamp) {
+    return "";
+  }
 
   let date;
 
@@ -163,7 +165,6 @@ function formatTime(timestamp) {
 
   }
 
-
   return date.toLocaleTimeString(
     [],
     {
@@ -171,6 +172,38 @@ function formatTime(timestamp) {
       minute: "2-digit"
     }
   );
+
+}
+
+
+function getMillis(timestamp) {
+
+  if (!timestamp) {
+    return 0;
+  }
+
+  if (
+    timestamp.toMillis &&
+    typeof timestamp.toMillis === "function"
+  ) {
+
+    return timestamp.toMillis();
+
+  }
+
+  if (timestamp instanceof Date) {
+
+    return timestamp.getTime();
+
+  }
+
+  if (typeof timestamp === "number") {
+
+    return timestamp;
+
+  }
+
+  return 0;
 
 }
 
@@ -190,7 +223,6 @@ function defaultAvatar(name = "User") {
       .charAt(0)
       .toUpperCase() || "U";
 
-
   return (
     "data:image/svg+xml;charset=UTF-8," +
     encodeURIComponent(`
@@ -199,12 +231,14 @@ function defaultAvatar(name = "User") {
         width="200"
         height="200"
       >
+
         <rect
           width="200"
           height="200"
           rx="100"
           fill="#eadbd0"
         />
+
         <text
           x="100"
           y="115"
@@ -215,6 +249,7 @@ function defaultAvatar(name = "User") {
         >
           ${letter}
         </text>
+
       </svg>
     `)
   );
@@ -226,8 +261,8 @@ function avatarFor(profile) {
 
   if (
     profile &&
-    profile.photoURL &&
-    typeof profile.photoURL === "string"
+    typeof profile.photoURL === "string" &&
+    profile.photoURL.trim() !== ""
   ) {
 
     return profile.photoURL;
@@ -243,13 +278,19 @@ function avatarFor(profile) {
 
 function showToast(message) {
 
-  const toast = $("toast");
+  const toast =
+    $("toast");
 
-  if (!toast) return;
+  if (!toast) {
+    return;
+  }
 
-  toast.textContent = message;
+  toast.textContent =
+    message;
 
-  toast.classList.add("show");
+  toast.classList.add(
+    "show"
+  );
 
   clearTimeout(
     window.__moodToastTimer
@@ -258,7 +299,9 @@ function showToast(message) {
   window.__moodToastTimer =
     setTimeout(() => {
 
-      toast.classList.remove("show");
+      toast.classList.remove(
+        "show"
+      );
 
     }, 2500);
 
@@ -271,8 +314,151 @@ function showToast(message) {
 
 async function loadMyProfile() {
 
-  if (!state.user) return null;
+  if (!state.user) {
+    return null;
+  }
 
+  const ref =
+    db
+      .collection("profiles")
+      .doc(state.user.uid);
+
+  try {
+
+    const snap =
+      await ref.get();
+
+    // --------------------------------------------------------
+    // PROFILE DOES NOT EXIST
+    // --------------------------------------------------------
+
+    if (!snap.exists) {
+
+      const profile = {
+
+        uid:
+          state.user.uid,
+
+        username:
+          state.user.email
+            ? state.user.email.split("@")[0]
+            : "User",
+
+        email:
+          state.user.email || "",
+
+        gender:
+          "",
+
+        current_mood:
+          null,
+
+        points:
+          0,
+
+        rank:
+          0,
+
+        photoURL:
+          "",
+
+        createdAt:
+          firebase.firestore.FieldValue
+            .serverTimestamp(),
+
+        updatedAt:
+          firebase.firestore.FieldValue
+            .serverTimestamp()
+
+      };
+
+      await ref.set(
+        profile,
+        {
+          merge: true
+        }
+      );
+
+      state.profile = {
+
+        ...profile,
+
+        uid:
+          state.user.uid
+
+      };
+
+      return state.profile;
+
+    }
+
+
+    // --------------------------------------------------------
+    // PROFILE EXISTS
+    // --------------------------------------------------------
+
+    state.profile = {
+
+      uid:
+        snap.id,
+
+      ...snap.data()
+
+    };
+
+
+    // --------------------------------------------------------
+    // MAKE SURE EMAIL IS CORRECT
+    // --------------------------------------------------------
+
+    if (
+      !state.profile.email &&
+      state.user.email
+    ) {
+
+      state.profile.email =
+        state.user.email;
+
+    }
+
+
+    return state.profile;
+
+  } catch (error) {
+
+    console.error(
+      "LOAD PROFILE ERROR:",
+      error
+    );
+
+    throw error;
+
+  }
+
+}
+
+
+// ============================================================
+// REAL-TIME PROFILE LISTENER
+// ============================================================
+
+let myProfileUnsubscribe = null;
+
+
+function startMyProfileListener() {
+
+  if (!state.user) {
+    return;
+  }
+
+  if (myProfileUnsubscribe) {
+
+    myProfileUnsubscribe();
+
+    myProfileUnsubscribe =
+      null;
+
+  }
 
   const ref =
     db
@@ -280,60 +466,85 @@ async function loadMyProfile() {
       .doc(state.user.uid);
 
 
-  const snap =
-    await ref.get();
+  myProfileUnsubscribe =
+    ref.onSnapshot(
+
+      snapshot => {
+
+        if (!snapshot.exists) {
+          return;
+        }
 
 
-  if (!snap.exists) {
+        const firebaseProfile = {
 
-    const profile = {
+          uid:
+            snapshot.id,
 
-      uid: state.user.uid,
+          ...snapshot.data()
 
-      username:
-        state.user.email
-          ? state.user.email.split("@")[0]
-          : "User",
-
-      email:
-        state.user.email || "",
-
-      gender: "",
-
-      current_mood: null,
-
-      points: 0,
-
-      rank: 0,
-
-      photoURL: "",
-
-      createdAt:
-        firebase.firestore.FieldValue
-          .serverTimestamp()
-
-    };
+        };
 
 
-    await ref.set(profile);
+        // Keep the COMPLETE profile
+        // synchronized with Firebase.
 
-    state.profile = profile;
-
-    return profile;
-
-  }
+        state.profile =
+          firebaseProfile;
 
 
-  state.profile = {
-
-    uid: snap.id,
-
-    ...snap.data()
-
-  };
+        // Keep local mood synchronized.
+        state.mood =
+          firebaseProfile.current_mood ||
+          null;
 
 
-  return state.profile;
+        // Update our copy inside profiles.
+        const index =
+          state.profiles.findIndex(
+            p =>
+              p.uid ===
+              state.user.uid
+          );
+
+
+        if (index >= 0) {
+
+          state.profiles[index] =
+            firebaseProfile;
+
+        } else {
+
+          state.profiles.push(
+            firebaseProfile
+          );
+
+        }
+
+
+        renderProfile();
+
+        updateMoodUI();
+
+        updatePresence();
+
+        updatePrivateMatch();
+
+        renderLeaderboard();
+
+        renderLive();
+
+      },
+
+      error => {
+
+        console.error(
+          "PROFILE LISTENER ERROR:",
+          error
+        );
+
+      }
+    );
 
 }
 
@@ -354,15 +565,45 @@ async function loadAllProfiles() {
 
 
     state.profiles =
-      snap.docs.map(doc => ({
-        uid: doc.id,
-        ...doc.data()
-      }));
+      snap.docs.map(
+        doc => ({
+          uid:
+            doc.id,
+
+          ...doc.data()
+        })
+      );
+
+
+    // Make sure our own current profile
+    // is present in the list.
+
+    if (state.profile) {
+
+      const existing =
+        state.profiles.find(
+          p =>
+            p.uid ===
+            state.profile.uid
+        );
+
+
+      if (!existing) {
+
+        state.profiles.push(
+          state.profile
+        );
+
+      }
+
+    }
 
 
     renderLeaderboard();
 
     renderProfile();
+
+    renderLive();
 
   } catch (error) {
 
@@ -382,14 +623,21 @@ async function loadAllProfiles() {
 
 function renderProfile() {
 
-  const p = state.profile;
+  const p =
+    state.profile;
 
-  if (!p) return;
+  if (!p) {
+    return;
+  }
 
 
   const avatar =
     avatarFor(p);
 
+
+  // ----------------------------------------------------------
+  // TOP PROFILE
+  // ----------------------------------------------------------
 
   if ($("topProfileAvatar")) {
 
@@ -399,6 +647,10 @@ function renderProfile() {
   }
 
 
+  // ----------------------------------------------------------
+  // DRAWER PROFILE
+  // ----------------------------------------------------------
+
   if ($("drawerAvatar")) {
 
     $("drawerAvatar").src =
@@ -407,6 +659,10 @@ function renderProfile() {
   }
 
 
+  // ----------------------------------------------------------
+  // MY PROFILE
+  // ----------------------------------------------------------
+
   if ($("myProfileAvatar")) {
 
     $("myProfileAvatar").src =
@@ -414,6 +670,10 @@ function renderProfile() {
 
   }
 
+
+  // ----------------------------------------------------------
+  // PROFILE POPOVER
+  // ----------------------------------------------------------
 
   if ($("popoverProfileAvatar")) {
 
@@ -446,7 +706,9 @@ function renderProfile() {
   if ($("myProfileEmail")) {
 
     $("myProfileEmail").textContent =
-      p.email || "—";
+      p.email ||
+      state.user?.email ||
+      "—";
 
   }
 
@@ -454,7 +716,8 @@ function renderProfile() {
   if ($("profileUsername")) {
 
     $("profileUsername").textContent =
-      p.username || "—";
+      p.username ||
+      "—";
 
   }
 
@@ -462,7 +725,8 @@ function renderProfile() {
   if ($("profileGender")) {
 
     $("profileGender").textContent =
-      p.gender || "—";
+      p.gender ||
+      "—";
 
   }
 
@@ -470,7 +734,9 @@ function renderProfile() {
   if ($("profilePoints")) {
 
     $("profilePoints").textContent =
-      Number(p.points || 0);
+      Number(
+        p.points || 0
+      );
 
   }
 
@@ -478,7 +744,9 @@ function renderProfile() {
   if ($("popoverPoints")) {
 
     $("popoverPoints").textContent =
-      Number(p.points || 0);
+      Number(
+        p.points || 0
+      );
 
   }
 
@@ -503,13 +771,17 @@ function renderProfile() {
 
 
   const rank =
-    getUserRank(p.uid);
+    getUserRank(
+      p.uid
+    );
 
 
   if ($("profileRank")) {
 
     $("profileRank").textContent =
-      rank ? "#" + rank : "—";
+      rank
+        ? "#" + rank
+        : "—";
 
   }
 
@@ -517,7 +789,9 @@ function renderProfile() {
   if ($("popoverRank")) {
 
     $("popoverRank").textContent =
-      rank ? "#" + rank : "—";
+      rank
+        ? "#" + rank
+        : "—";
 
   }
 
@@ -544,7 +818,8 @@ function getUserRank(uid) {
 
   const index =
     sorted.findIndex(
-      user => user.uid === uid
+      user =>
+        user.uid === uid
     );
 
 
@@ -562,7 +837,9 @@ function getUserRank(uid) {
 function updateMoodUI() {
 
   const mood =
-    getMood(state.mood);
+    getMood(
+      state.mood
+    );
 
 
   document.body.classList.remove(
@@ -584,12 +861,14 @@ function updateMoodUI() {
 
     }
 
+
     if ($("sideMood")) {
 
       $("sideMood").textContent =
         "Choose mood";
 
     }
+
 
     if ($("myProfileMood")) {
 
@@ -598,13 +877,23 @@ function updateMoodUI() {
 
     }
 
+
+    if ($("popoverMood")) {
+
+      $("popoverMood").textContent =
+        "🙂";
+
+    }
+
+
     return;
 
   }
 
 
   document.body.classList.add(
-    "mood-" + state.mood
+    "mood-" +
+    state.mood
   );
 
 
@@ -675,10 +964,14 @@ function updateMoodUI() {
 function openMoodPicker() {
 
   $("popupOverlay")
-    ?.classList.add("open");
+    ?.classList.add(
+      "open"
+    );
 
   $("moodPopover")
-    ?.classList.add("open");
+    ?.classList.add(
+      "open"
+    );
 
 }
 
@@ -686,27 +979,68 @@ function openMoodPicker() {
 function closeMoodPicker() {
 
   $("popupOverlay")
-    ?.classList.remove("open");
+    ?.classList.remove(
+      "open"
+    );
 
   $("moodPopover")
-    ?.classList.remove("open");
+    ?.classList.remove(
+      "open"
+    );
 
 }
 
 
+// ============================================================
+// SET MOOD
+// ============================================================
+
 async function setMood(moodKey) {
 
+  if (!state.user) {
+
+    showToast(
+      "Please log in first."
+    );
+
+    return;
+
+  }
+
+
+  if (!MOODS[moodKey]) {
+
+    return;
+
+  }
+
+
+  // Don't do anything if already selected.
   if (
-    !state.user ||
-    !MOODS[moodKey]
-  ) return;
+    state.mood === moodKey
+  ) {
+
+    closeMoodPicker();
+
+    return;
+
+  }
+
+
+  const oldMood =
+    state.mood;
 
 
   try {
 
-    state.mood =
-      moodKey;
+    showToast(
+      "Changing mood..."
+    );
 
+
+    // --------------------------------------------------------
+    // SAVE MOOD TO FIREBASE FIRST
+    // --------------------------------------------------------
 
     await db
       .collection("profiles")
@@ -725,61 +1059,171 @@ async function setMood(moodKey) {
       });
 
 
-    state.profile.current_mood =
+    // --------------------------------------------------------
+    // UPDATE LOCAL STATE
+    // ONLY AFTER FIREBASE SUCCESS
+    // --------------------------------------------------------
+
+    state.mood =
       moodKey;
 
 
-    await db
-      .collection("profiles")
-      .doc(state.user.uid)
-      .collection("mood_history")
-      .add({
+    if (state.profile) {
 
-        mood:
-          moodKey,
+      state.profile.current_mood =
+        moodKey;
 
-        createdAt:
-          firebase.firestore.FieldValue
-            .serverTimestamp()
-
-      });
+    }
 
 
-    await updatePresence();
+    const me =
+      state.profiles.find(
+        p =>
+          p.uid ===
+          state.user.uid
+      );
 
+
+    if (me) {
+
+      me.current_mood =
+        moodKey;
+
+    }
+
+
+    // --------------------------------------------------------
+    // MOOD HISTORY
+    // --------------------------------------------------------
+
+    try {
+
+      await db
+        .collection("profiles")
+        .doc(state.user.uid)
+        .collection("mood_history")
+        .add({
+
+          mood:
+            moodKey,
+
+          previousMood:
+            oldMood || null,
+
+          createdAt:
+            firebase.firestore.FieldValue
+              .serverTimestamp()
+
+        });
+
+    } catch (historyError) {
+
+      console.error(
+        "Mood history error:",
+        historyError
+      );
+
+    }
+
+
+    // --------------------------------------------------------
+    // UPDATE UI
+    // --------------------------------------------------------
 
     updateMoodUI();
 
 
     $("chooseMoodScreen")
-      ?.classList.add("hidden");
+      ?.classList.add(
+        "hidden"
+      );
 
 
     $("moodChatContent")
-      ?.classList.remove("hidden");
+      ?.classList.remove(
+        "hidden"
+      );
 
 
     $("publicComposer")
-      ?.classList.remove("hidden");
+      ?.classList.remove(
+        "hidden"
+      );
 
 
     closeMoodPicker();
 
 
+    // --------------------------------------------------------
+    // PRESENCE
+    // --------------------------------------------------------
+
+    await updatePresence();
+
+
+    // --------------------------------------------------------
+    // PUBLIC ROOM
+    // --------------------------------------------------------
+
     startPublicMessages();
 
 
+    // --------------------------------------------------------
+    // PUBLIC TYPING LISTENER
+    // IMPORTANT AFTER MOOD CHANGE
+    // --------------------------------------------------------
+
+    startPublicTypingListener();
+
+
+    // --------------------------------------------------------
+    // UPDATE PRIVATE MATCH
+    // --------------------------------------------------------
+
+    updatePrivateMatch();
+
+
+    // --------------------------------------------------------
+    // REFRESH LIVE / LEADERBOARD
+    // --------------------------------------------------------
+
+    renderLive();
+
+    renderLeaderboard();
+
+    renderProfile();
+
+
     showToast(
-      "Mood changed to " +
+      MOODS[moodKey].emoji +
+      " Mood changed to " +
       MOODS[moodKey].name
     );
+
 
   } catch (error) {
 
     console.error(
-      "Mood error:",
+      "MOOD CHANGE ERROR:",
       error
     );
+
+
+    // Restore old mood if Firebase failed.
+    state.mood =
+      oldMood;
+
+
+    if (state.profile) {
+
+      state.profile.current_mood =
+        oldMood;
+
+    }
+
+
+    updateMoodUI();
+
 
     showToast(
       "Could not change your mood."
@@ -796,45 +1240,79 @@ async function setMood(moodKey) {
 
 async function startPresence() {
 
-  if (!state.user) return;
+  if (!state.user) {
+    return;
+  }
 
 
-  const ref =
+  const ownRef =
     rtdb.ref(
       "presence/" +
       state.user.uid
     );
 
 
-  ref.onDisconnect().remove();
+  try {
+
+    await ownRef.onDisconnect().remove();
+
+  } catch (error) {
+
+    console.error(
+      "Presence disconnect setup error:",
+      error
+    );
+
+  }
 
 
   await updatePresence();
 
 
+  if (state.presenceUnsubscribe) {
+
+    rtdb
+      .ref("presence")
+      .off(
+        "value",
+        state.presenceUnsubscribe
+      );
+
+  }
+
+
   state.presenceUnsubscribe =
     rtdb
       .ref("presence")
-      .on("value", snapshot => {
+      .on(
+        "value",
+        snapshot => {
 
-        state.onlineUsers =
-          snapshot.val() || {};
+          state.onlineUsers =
+            snapshot.val() || {};
 
 
-        updateOnlineCount();
+          updateOnlineCount();
 
-        renderLive();
+          renderLive();
 
-        updatePrivateStatus();
+          updatePrivateStatus();
 
-      });
+        }
+      );
 
 }
 
 
+// ============================================================
+// UPDATE PRESENCE
+// ============================================================
+
 async function updatePresence() {
 
-  if (!state.user) return;
+  if (!state.user) {
+    return;
+  }
 
 
   const ref =
@@ -844,26 +1322,50 @@ async function updatePresence() {
     );
 
 
-  await ref.set({
+  try {
 
-    username:
-      state.profile?.username ||
-      "User",
+    await ref.set({
 
-    mood:
-      state.mood || null,
+      uid:
+        state.user.uid,
 
-    gender:
-      state.profile?.gender || "",
+      username:
+        state.profile?.username ||
+        "User",
 
-    lastSeen:
-      firebase.database.ServerValue
-        .TIMESTAMP
+      mood:
+        state.mood ||
+        null,
 
-  });
+      gender:
+        state.profile?.gender ||
+        "",
+
+      photoURL:
+        state.profile?.photoURL ||
+        "",
+
+      lastSeen:
+        firebase.database.ServerValue
+          .TIMESTAMP
+
+    });
+
+  } catch (error) {
+
+    console.error(
+      "UPDATE PRESENCE ERROR:",
+      error
+    );
+
+  }
 
 }
 
+
+// ============================================================
+// ONLINE COUNT
+// ============================================================
 
 function updateOnlineCount() {
 
@@ -871,24 +1373,24 @@ function updateOnlineCount() {
     Object.values(
       state.onlineUsers || {}
     )
-    .filter(person => {
-
-      return (
-        person &&
-        person.mood === state.mood
-      );
-
-    })
-    .length;
+      .filter(
+        person =>
+          person &&
+          person.mood ===
+          state.mood
+      )
+      .length;
 
 
   if ($("onlineCount")) {
 
     $("onlineCount").textContent =
       count +
-      (count === 1
-        ? " online"
-        : " online");
+      (
+        count === 1
+          ? " online"
+          : " online"
+      );
 
   }
 
@@ -901,8 +1403,13 @@ function updateOnlineCount() {
 
 function startPublicMessages() {
 
-  if (!state.user || !state.mood) {
+  if (
+    !state.user ||
+    !state.mood
+  ) {
+
     return;
+
   }
 
 
@@ -926,18 +1433,29 @@ function startPublicMessages() {
       )
       .limit(100)
       .onSnapshot(
+
         snapshot => {
 
           const messages =
             snapshot.docs
-              .map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              }))
+              .map(
+                doc => ({
+
+                  id:
+                    doc.id,
+
+                  ...doc.data()
+
+                })
+              )
               .sort(
                 (a, b) =>
-                  getMillis(a.createdAt) -
-                  getMillis(b.createdAt)
+                  getMillis(
+                    a.createdAt
+                  ) -
+                  getMillis(
+                    b.createdAt
+                  )
               );
 
 
@@ -964,47 +1482,21 @@ function startPublicMessages() {
 }
 
 
-function getMillis(timestamp) {
+// ============================================================
+// RENDER PUBLIC MESSAGES
+// ============================================================
 
-  if (!timestamp) return 0;
-
-
-  if (
-    timestamp.toMillis &&
-    typeof timestamp.toMillis === "function"
-  ) {
-
-    return timestamp.toMillis();
-
-  }
-
-
-  if (timestamp instanceof Date) {
-
-    return timestamp.getTime();
-
-  }
-
-
-  if (typeof timestamp === "number") {
-
-    return timestamp;
-
-  }
-
-
-  return 0;
-
-}
-
-
-function renderPublicMessages(messages) {
+function renderPublicMessages(
+  messages
+) {
 
   const feed =
     $("publicFeed");
 
 
-  if (!feed) return;
+  if (!feed) {
+    return;
+  }
 
 
   if (!messages.length) {
@@ -1036,10 +1528,11 @@ function renderPublicMessages(messages) {
 
   feed.innerHTML =
     messages
-      .map(message =>
-        createMessageHTML(
-          message
-        )
+      .map(
+        message =>
+          createMessageHTML(
+            message
+          )
       )
       .join("");
 
@@ -1048,40 +1541,44 @@ function renderPublicMessages(messages) {
     .querySelectorAll(
       "[data-private-user]"
     )
-    .forEach(element => {
+    .forEach(
+      element => {
 
-      element.addEventListener(
-        "click",
-        () => {
+        element.addEventListener(
+          "click",
+          () => {
 
-          openPrivateChat(
-            element.dataset.privateUser
-          );
+            openPrivateChat(
+              element.dataset.privateUser
+            );
 
-        }
-      );
+          }
+        );
 
-    });
+      }
+    );
 
 
   feed
     .querySelectorAll(
       "[data-image]"
     )
-    .forEach(image => {
+    .forEach(
+      image => {
 
-      image.addEventListener(
-        "click",
-        () => {
+        image.addEventListener(
+          "click",
+          () => {
 
-          openImage(
-            image.dataset.image
-          );
+            openImage(
+              image.dataset.image
+            );
 
-        }
-      );
+          }
+        );
 
-    });
+      }
+    );
 
 
   feed.scrollTop =
@@ -1090,7 +1587,13 @@ function renderPublicMessages(messages) {
 }
 
 
-function createMessageHTML(message) {
+// ============================================================
+// MESSAGE HTML
+// ============================================================
+
+function createMessageHTML(
+  message
+) {
 
   const mine =
     message.userId ===
@@ -1098,7 +1601,9 @@ function createMessageHTML(message) {
 
 
   const mood =
-    getMood(message.mood);
+    getMood(
+      message.mood
+    );
 
 
   const username =
@@ -1108,7 +1613,9 @@ function createMessageHTML(message) {
 
   const photo =
     message.photoURL ||
-    defaultAvatar(username);
+    defaultAvatar(
+      username
+    );
 
 
   const text =
@@ -1120,6 +1627,7 @@ function createMessageHTML(message) {
   const image =
     message.image_base64
       ? `
+
         <img
           class="message-image"
           data-image="${escapeHTML(
@@ -1130,6 +1638,7 @@ function createMessageHTML(message) {
           )}"
           alt="Image"
         >
+
       `
       : "";
 
@@ -1146,6 +1655,7 @@ function createMessageHTML(message) {
         alt="${escapeHTML(username)}"
       >
 
+
       <div class="message-content">
 
         <div class="message-name">
@@ -1154,9 +1664,7 @@ function createMessageHTML(message) {
             data-private-user="${escapeHTML(
               message.userId
             )}"
-            style="
-              cursor:pointer;
-            "
+            style="cursor:pointer;"
           >
             ${escapeHTML(username)}
           </span>
@@ -1195,12 +1703,15 @@ function createMessageHTML(message) {
 
 
 // ============================================================
-// SEND PUBLIC TEXT
+// SEND PUBLIC MESSAGE
 // ============================================================
 
 async function sendPublicMessage() {
 
-  if (!state.user || !state.mood) {
+  if (
+    !state.user ||
+    !state.mood
+  ) {
 
     showToast(
       "Choose a mood first."
@@ -1215,11 +1726,18 @@ async function sendPublicMessage() {
     $("messageInput");
 
 
+  if (!input) {
+    return;
+  }
+
+
   const text =
     input.value.trim();
 
 
-  if (!text) return;
+  if (!text) {
+    return;
+  }
 
 
   input.value = "";
@@ -1235,15 +1753,15 @@ async function sendPublicMessage() {
           state.user.uid,
 
         username:
-          state.profile.username ||
+          state.profile?.username ||
           "User",
 
         handle:
-          state.profile.username ||
+          state.profile?.username ||
           "",
 
         photoURL:
-          state.profile.photoURL ||
+          state.profile?.photoURL ||
           "",
 
         mood:
@@ -1268,9 +1786,10 @@ async function sendPublicMessage() {
   } catch (error) {
 
     console.error(
-      "Send public message error:",
+      "SEND PUBLIC MESSAGE ERROR:",
       error
     );
+
 
     showToast(
       "Message could not be sent."
@@ -1287,7 +1806,7 @@ async function sendPublicMessage() {
 
 function compressImage(
   file,
-  max = 700000
+  max = 500000
 ) {
 
   return new Promise(
@@ -1295,11 +1814,16 @@ function compressImage(
 
       if (
         !file ||
-        !file.type.startsWith("image/")
+        !file.type ||
+        !file.type.startsWith(
+          "image/"
+        )
       ) {
 
         reject(
-          new Error("Invalid image")
+          new Error(
+            "Invalid image"
+          )
         );
 
         return;
@@ -1312,7 +1836,15 @@ function compressImage(
 
 
       reader.onerror =
-        reject;
+        () => {
+
+          reject(
+            new Error(
+              "Could not read image"
+            )
+          );
+
+        };
 
 
       reader.onload = () => {
@@ -1374,7 +1906,22 @@ function compressImage(
 
 
           const context =
-            canvas.getContext("2d");
+            canvas.getContext(
+              "2d"
+            );
+
+
+          if (!context) {
+
+            reject(
+              new Error(
+                "Canvas unavailable"
+              )
+            );
+
+            return;
+
+          }
 
 
           context.drawImage(
@@ -1404,6 +1951,7 @@ function compressImage(
 
             quality -= 0.08;
 
+
             data =
               canvas.toDataURL(
                 "image/jpeg",
@@ -1413,7 +1961,9 @@ function compressImage(
           }
 
 
-          if (data.length > max) {
+          if (
+            data.length > max
+          ) {
 
             reject(
               new Error(
@@ -1432,7 +1982,15 @@ function compressImage(
 
 
         image.onerror =
-          reject;
+          () => {
+
+            reject(
+              new Error(
+                "Could not decode image"
+              )
+            );
+
+          };
 
 
         image.src =
@@ -1441,7 +1999,9 @@ function compressImage(
       };
 
 
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(
+        file
+      );
 
     }
   );
@@ -1453,9 +2013,14 @@ function compressImage(
 // SEND PUBLIC IMAGE
 // ============================================================
 
-async function sendPublicImage(file) {
+async function sendPublicImage(
+  file
+) {
 
-  if (!state.user || !state.mood) {
+  if (
+    !state.user ||
+    !state.mood
+  ) {
 
     showToast(
       "Choose a mood first."
@@ -1463,6 +2028,11 @@ async function sendPublicImage(file) {
 
     return;
 
+  }
+
+
+  if (!file) {
+    return;
   }
 
 
@@ -1474,7 +2044,10 @@ async function sendPublicImage(file) {
 
 
     const base64 =
-      await compressImage(file);
+      await compressImage(
+        file,
+        650000
+      );
 
 
     await db
@@ -1485,15 +2058,15 @@ async function sendPublicImage(file) {
           state.user.uid,
 
         username:
-          state.profile.username ||
+          state.profile?.username ||
           "User",
 
         handle:
-          state.profile.username ||
+          state.profile?.username ||
           "",
 
         photoURL:
-          state.profile.photoURL ||
+          state.profile?.photoURL ||
           "",
 
         mood:
@@ -1523,9 +2096,10 @@ async function sendPublicImage(file) {
   } catch (error) {
 
     console.error(
-      "Image send error:",
+      "PUBLIC IMAGE ERROR:",
       error
     );
+
 
     showToast(
       "Image could not be sent."
@@ -1540,9 +2114,13 @@ async function sendPublicImage(file) {
 // POINTS
 // ============================================================
 
-async function addPoints(amount) {
+async function addPoints(
+  amount
+) {
 
-  if (!state.user) return;
+  if (!state.user) {
+    return;
+  }
 
 
   const ref =
@@ -1551,45 +2129,63 @@ async function addPoints(amount) {
       .doc(state.user.uid);
 
 
-  await ref.update({
+  try {
 
-    points:
-      firebase.firestore.FieldValue
-        .increment(amount)
+    await ref.set({
 
-  });
+      points:
+        firebase.firestore.FieldValue
+          .increment(amount),
 
+      updatedAt:
+        firebase.firestore.FieldValue
+          .serverTimestamp()
 
-  if (state.profile) {
-
-    state.profile.points =
-      Number(
-        state.profile.points || 0
-      ) + amount;
-
-  }
+    }, {
+      merge: true
+    });
 
 
-  const me =
-    state.profiles.find(
-      user =>
-        user.uid ===
-        state.user.uid
+    if (state.profile) {
+
+      state.profile.points =
+        Number(
+          state.profile.points || 0
+        ) + amount;
+
+    }
+
+
+    const me =
+      state.profiles.find(
+        user =>
+          user.uid ===
+          state.user.uid
+      );
+
+
+    if (me) {
+
+      me.points =
+        Number(
+          me.points || 0
+        ) + amount;
+
+    }
+
+
+    renderProfile();
+
+    renderLeaderboard();
+
+  } catch (error) {
+
+    console.error(
+      "ADD POINTS ERROR:",
+      error
     );
 
-
-  if (me) {
-
-    me.points =
-      Number(me.points || 0) +
-      amount;
-
   }
-
-
-  renderProfile();
-
-  renderLeaderboard();
 
 }
 
@@ -1598,14 +2194,17 @@ async function addPoints(amount) {
 // PRIVATE CHAT ID
 // ============================================================
 
-function getChatId(uid1, uid2) {
+function getChatId(
+  uid1,
+  uid2
+) {
 
   return [
     uid1,
     uid2
   ]
-  .sort()
-  .join("_");
+    .sort()
+    .join("_");
 
 }
 
@@ -1614,20 +2213,30 @@ function getChatId(uid1, uid2) {
 // OPEN PRIVATE CHAT
 // ============================================================
 
-async function openPrivateChat(uid) {
+async function openPrivateChat(
+  uid
+) {
 
   if (
     !uid ||
     uid === state.user?.uid
-  ) return;
+  ) {
+
+    return;
+
+  }
 
 
-  const profile =
+  let profile =
     state.profiles.find(
       user =>
         user.uid === uid
     );
 
+
+  // ----------------------------------------------------------
+  // IF PROFILE IS NOT IN MEMORY, GET IT FROM FIREBASE
+  // ----------------------------------------------------------
 
   if (!profile) {
 
@@ -1651,40 +2260,115 @@ async function openPrivateChat(uid) {
       }
 
 
-      state.selectedPrivateUser = {
+      profile = {
 
-        uid: snap.id,
+        uid:
+          snap.id,
 
         ...snap.data()
 
       };
 
+
+      state.profiles.push(
+        profile
+      );
+
+
     } catch (error) {
 
-      console.error(error);
+      console.error(
+        "PRIVATE PROFILE ERROR:",
+        error
+      );
+
+      showToast(
+        "Could not open this profile."
+      );
 
       return;
 
     }
 
-  } else {
+  }
 
-    state.selectedPrivateUser =
-      profile;
+
+  // ----------------------------------------------------------
+  // IMPORTANT: GET FRESH PROFILE DATA
+  // ----------------------------------------------------------
+
+  try {
+
+    const fresh =
+      await db
+        .collection("profiles")
+        .doc(uid)
+        .get();
+
+
+    if (fresh.exists) {
+
+      profile = {
+
+        uid:
+          fresh.id,
+
+        ...fresh.data()
+
+      };
+
+
+      const index =
+        state.profiles.findIndex(
+          p =>
+            p.uid === uid
+        );
+
+
+      if (index >= 0) {
+
+        state.profiles[index] =
+          profile;
+
+      } else {
+
+        state.profiles.push(
+          profile
+        );
+
+      }
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "Fresh profile error:",
+      error
+    );
 
   }
 
 
-  const person =
-    state.selectedPrivateUser;
+  state.selectedPrivateUser =
+    profile;
 
 
-  $("privateName").textContent =
-    person.username || "User";
+  if ($("privateName")) {
+
+    $("privateName").textContent =
+      profile.username ||
+      "User";
+
+  }
 
 
-  $("privateAvatar").src =
-    avatarFor(person);
+  if ($("privateAvatar")) {
+
+    $("privateAvatar").src =
+      avatarFor(profile);
+
+  }
 
 
   updatePrivateStatus();
@@ -1693,12 +2377,19 @@ async function openPrivateChat(uid) {
 
 
   $("privatePopover")
-    ?.classList.add("open");
+    ?.classList.add(
+      "open"
+    );
 
 
   startPrivateMessages(
-    person.uid
+    profile.uid
   );
+
+
+  // IMPORTANT:
+  // Start private typing listener
+  startPrivateTypingListener();
 
 
   $("privateMessageInput")
@@ -1707,10 +2398,16 @@ async function openPrivateChat(uid) {
 }
 
 
+// ============================================================
+// CLOSE PRIVATE CHAT
+// ============================================================
+
 function closePrivateChat() {
 
   $("privatePopover")
-    ?.classList.remove("open");
+    ?.classList.remove(
+      "open"
+    );
 
 
   if (state.privateUnsubscribe) {
@@ -1718,6 +2415,16 @@ function closePrivateChat() {
     state.privateUnsubscribe();
 
     state.privateUnsubscribe =
+      null;
+
+  }
+
+
+  if (state.typingPrivateRef) {
+
+    state.typingPrivateRef.off();
+
+    state.typingPrivateRef =
       null;
 
   }
@@ -1739,11 +2446,15 @@ function updatePrivateStatus() {
     state.selectedPrivateUser;
 
 
-  if (!person) return;
+  if (!person) {
+    return;
+  }
 
 
   const online =
-    !!state.onlineUsers?.[person.uid];
+    !!state.onlineUsers?.[
+      person.uid
+    ];
 
 
   if ($("privateStatus")) {
@@ -1768,11 +2479,15 @@ function updatePrivateMatch() {
     state.selectedPrivateUser;
 
 
-  if (!person) return;
+  if (!person) {
+    return;
+  }
 
 
   const myMood =
-    getMood(state.mood);
+    getMood(
+      state.mood
+    );
 
 
   const theirMood =
@@ -1784,6 +2499,7 @@ function updatePrivateMatch() {
   const text =
 
     "You: " +
+
     (
       myMood
         ? myMood.emoji
@@ -1815,10 +2531,17 @@ function updatePrivateMatch() {
 // PRIVATE MESSAGES
 // ============================================================
 
-function startPrivateMessages(uid) {
+function startPrivateMessages(
+  uid
+) {
 
-  if (!state.user || !uid) {
+  if (
+    !state.user ||
+    !uid
+  ) {
+
     return;
+
   }
 
 
@@ -1850,13 +2573,18 @@ function startPrivateMessages(uid) {
       )
       .limit(100)
       .onSnapshot(
+
         snapshot => {
 
           const messages =
             snapshot.docs.map(
               doc => ({
-                id: doc.id,
+
+                id:
+                  doc.id,
+
                 ...doc.data()
+
               })
             );
 
@@ -1870,7 +2598,7 @@ function startPrivateMessages(uid) {
         error => {
 
           console.error(
-            "Private messages error:",
+            "PRIVATE MESSAGES ERROR:",
             error
           );
 
@@ -1884,13 +2612,21 @@ function startPrivateMessages(uid) {
 }
 
 
-function renderPrivateMessages(messages) {
+// ============================================================
+// RENDER PRIVATE MESSAGES
+// ============================================================
+
+function renderPrivateMessages(
+  messages
+) {
 
   const feed =
     $("privateFeed");
 
 
-  if (!feed) return;
+  if (!feed) {
+    return;
+  }
 
 
   if (!messages.length) {
@@ -1935,20 +2671,22 @@ function renderPrivateMessages(messages) {
     .querySelectorAll(
       "[data-image]"
     )
-    .forEach(image => {
+    .forEach(
+      image => {
 
-      image.addEventListener(
-        "click",
-        () => {
+        image.addEventListener(
+          "click",
+          () => {
 
-          openImage(
-            image.dataset.image
-          );
+            openImage(
+              image.dataset.image
+            );
 
-        }
-      );
+          }
+        );
 
-    });
+      }
+    );
 
 
   feed.scrollTop =
@@ -1967,8 +2705,13 @@ async function sendPrivateMessage() {
     state.selectedPrivateUser;
 
 
-  if (!state.user || !person) {
+  if (
+    !state.user ||
+    !person
+  ) {
+
     return;
+
   }
 
 
@@ -1976,21 +2719,43 @@ async function sendPrivateMessage() {
     $("privateMessageInput");
 
 
+  if (!input) {
+    return;
+  }
+
+
   const text =
     input.value.trim();
 
 
-  if (!text) return;
+  if (!text) {
+    return;
+  }
 
 
   input.value = "";
 
 
-  await sendPrivateData(
-    person.uid,
-    text,
-    ""
-  );
+  try {
+
+    await sendPrivateData(
+      person.uid,
+      text,
+      ""
+    );
+
+  } catch (error) {
+
+    console.error(
+      "PRIVATE MESSAGE ERROR:",
+      error
+    );
+
+    showToast(
+      "Message could not be sent."
+    );
+
+  }
 
 }
 
@@ -1999,14 +2764,22 @@ async function sendPrivateMessage() {
 // SEND PRIVATE IMAGE
 // ============================================================
 
-async function sendPrivateImage(file) {
+async function sendPrivateImage(
+  file
+) {
 
   const person =
     state.selectedPrivateUser;
 
 
-  if (!state.user || !person) {
+  if (
+    !state.user ||
+    !person ||
+    !file
+  ) {
+
     return;
+
   }
 
 
@@ -2018,7 +2791,10 @@ async function sendPrivateImage(file) {
 
 
     const base64 =
-      await compressImage(file);
+      await compressImage(
+        file,
+        650000
+      );
 
 
     await sendPrivateData(
@@ -2036,8 +2812,10 @@ async function sendPrivateImage(file) {
   } catch (error) {
 
     console.error(
+      "PRIVATE IMAGE ERROR:",
       error
     );
+
 
     showToast(
       "Image could not be sent."
@@ -2057,6 +2835,16 @@ async function sendPrivateData(
   text,
   imageBase64
 ) {
+
+  if (
+    !state.user ||
+    !otherUid
+  ) {
+
+    return;
+
+  }
+
 
   const chatId =
     getChatId(
@@ -2102,25 +2890,27 @@ async function sendPrivateData(
         state.user.uid,
 
       username:
-        state.profile.username ||
+        state.profile?.username ||
         "User",
 
       handle:
-        state.profile.username ||
+        state.profile?.username ||
         "",
 
       photoURL:
-        state.profile.photoURL ||
+        state.profile?.photoURL ||
         "",
 
       mood:
-        state.mood || null,
+        state.mood ||
+        null,
 
       text:
         text,
 
       image_base64:
-        imageBase64 || "",
+        imageBase64 ||
+        "",
 
       createdAt:
         firebase.firestore.FieldValue
@@ -2140,10 +2930,14 @@ async function sendPrivateData(
 
 function startConversations() {
 
-  if (!state.user) return;
+  if (!state.user) {
+    return;
+  }
 
 
-  if (state.conversationsUnsubscribe) {
+  if (
+    state.conversationsUnsubscribe
+  ) {
 
     state.conversationsUnsubscribe();
 
@@ -2163,14 +2957,21 @@ function startConversations() {
       )
       .limit(100)
       .onSnapshot(
+
         snapshot => {
 
           const chats =
             snapshot.docs
-              .map(doc => ({
-                id: doc.id,
-                ...doc.data()
-              }))
+              .map(
+                doc => ({
+
+                  id:
+                    doc.id,
+
+                  ...doc.data()
+
+                })
+              )
               .sort(
                 (a, b) =>
                   getMillis(
@@ -2191,7 +2992,7 @@ function startConversations() {
         error => {
 
           console.error(
-            "Conversations error:",
+            "CONVERSATIONS ERROR:",
             error
           );
 
@@ -2201,13 +3002,21 @@ function startConversations() {
 }
 
 
-function renderConversations(chats) {
+// ============================================================
+// RENDER CONVERSATIONS
+// ============================================================
+
+function renderConversations(
+  chats = []
+) {
 
   const container =
     $("conversationsList");
 
 
-  if (!container) return;
+  if (!container) {
+    return;
+  }
 
 
   if (!chats.length) {
@@ -2238,103 +3047,147 @@ function renderConversations(chats) {
 
 
   const html =
-    chats.map(chat => {
+    chats
+      .map(
+        chat => {
 
-      const otherUid =
-        chat.members.find(
-          uid =>
-            uid !==
-            state.user.uid
-        );
+          if (
+            !Array.isArray(
+              chat.members
+            )
+          ) {
 
+            return "";
 
-      const person =
-        state.profiles.find(
-          user =>
-            user.uid ===
-            otherUid
-        );
+          }
 
 
-      const name =
-        person?.username ||
-        "User";
+          const otherUid =
+            chat.members.find(
+              uid =>
+                uid !==
+                state.user.uid
+            );
 
 
-      const avatar =
-        avatarFor(person || {
-          username: name
-        });
+          if (!otherUid) {
+            return "";
+          }
 
 
-      return `
+          const person =
+            state.profiles.find(
+              user =>
+                user.uid ===
+                otherUid
+            );
 
-        <button
-          class="conversation"
-          type="button"
-          data-conversation-user="${escapeHTML(
-            otherUid
-          )}"
-        >
 
-          <img
-            class="conversation-avatar"
-            src="${escapeHTML(avatar)}"
-            alt="${escapeHTML(name)}"
-          >
+          const name =
+            person?.username ||
+            "User";
 
-          <div class="conversation-info">
 
-            <div class="conversation-name">
-              ${escapeHTML(name)}
-            </div>
+          const avatar =
+            avatarFor(
+              person || {
+                username: name
+              }
+            );
 
-            <div class="conversation-preview">
-              ${escapeHTML(
-                chat.lastMessage ||
-                "No messages"
-              )}
-            </div>
 
-          </div>
+          return `
 
-          <div class="conversation-time">
-            ${formatTime(
-              chat.lastMessageAt
-            )}
-          </div>
+            <button
+              class="conversation"
+              type="button"
+              data-conversation-user="${escapeHTML(
+                otherUid
+              )}"
+            >
 
-        </button>
+              <img
+                class="conversation-avatar"
+                src="${escapeHTML(
+                  avatar
+                )}"
+                alt="${escapeHTML(
+                  name
+                )}"
+              >
 
-      `;
+              <div class="conversation-info">
 
-    })
-    .join("");
+                <div class="conversation-name">
+                  ${escapeHTML(
+                    name
+                  )}
+                </div>
+
+                <div class="conversation-preview">
+                  ${escapeHTML(
+                    chat.lastMessage ||
+                    "No messages"
+                  )}
+                </div>
+
+              </div>
+
+              <div class="conversation-time">
+                ${formatTime(
+                  chat.lastMessageAt
+                )}
+              </div>
+
+            </button>
+
+          `;
+
+        }
+      )
+      .join("");
 
 
   container.innerHTML =
-    html;
+    html ||
+    `
+
+      <div class="empty-state">
+
+        <span class="emoji">
+          💬
+        </span>
+
+        <strong>
+          No private chats yet
+        </strong>
+
+      </div>
+
+    `;
 
 
   container
     .querySelectorAll(
       "[data-conversation-user]"
     )
-    .forEach(button => {
+    .forEach(
+      button => {
 
-      button.addEventListener(
-        "click",
-        () => {
+        button.addEventListener(
+          "click",
+          () => {
 
-          openPrivateChat(
-            button.dataset
-              .conversationUser
-          );
+            openPrivateChat(
+              button.dataset
+                .conversationUser
+            );
 
-        }
-      );
+          }
+        );
 
-    });
+      }
+    );
 
 }
 
@@ -2349,33 +3202,44 @@ function renderLive() {
     $("livePeopleGrid");
 
 
-  if (!grid) return;
+  if (!grid) {
+    return;
+  }
 
 
   const people =
     Object.entries(
       state.onlineUsers || {}
     )
-    .filter(
-      ([uid, person]) =>
-        uid !== state.user?.uid &&
-        person
-    )
-    .map(
-      ([uid, person]) => ({
-        uid,
-        ...person
-      })
-    )
-    .filter(person => {
+      .filter(
+        ([uid, person]) =>
+          uid !==
+            state.user?.uid &&
+          person
+      )
+      .map(
+        ([uid, person]) => ({
 
-      if (!state.mood) {
-        return true;
-      }
+          uid,
 
-      return person.mood === state.mood;
+          ...person
 
-    });
+        })
+      )
+      .filter(
+        person => {
+
+          if (!state.mood) {
+            return true;
+          }
+
+          return (
+            person.mood ===
+            state.mood
+          );
+
+        }
+      );
 
 
   if (!people.length) {
@@ -2407,69 +3271,87 @@ function renderLive() {
 
   grid.innerHTML =
     people
-      .map(person => {
+      .map(
+        person => {
 
-        const mood =
-          getMood(person.mood);
-
-
-        const profile =
-          state.profiles.find(
-            user =>
-              user.uid ===
-              person.uid
-          );
+          const mood =
+            getMood(
+              person.mood
+            );
 
 
-        const name =
-          person.username ||
-          profile?.username ||
-          "User";
+          const profile =
+            state.profiles.find(
+              user =>
+                user.uid ===
+                person.uid
+            );
 
 
-        const avatar =
-          avatarFor(
-            profile || {
-              username: name
-            }
-          );
+          const name =
+            profile?.username ||
+            person.username ||
+            "User";
 
 
-        return `
+          const avatar =
+            avatarFor(
+              profile || {
+                username:
+                  name,
 
-          <div
-            class="live-card"
-            data-live-user="${escapeHTML(
-              person.uid
-            )}"
-          >
+                photoURL:
+                  person.photoURL ||
+                  ""
+              }
+            );
 
-            <div class="live-avatar-wrap">
 
-              <img
-                class="live-avatar"
-                src="${escapeHTML(avatar)}"
-                alt="${escapeHTML(name)}"
-              >
+          return `
 
-              <span class="online-dot"></span>
+            <div
+              class="live-card"
+              data-live-user="${escapeHTML(
+                person.uid
+              )}"
+            >
+
+              <div class="live-avatar-wrap">
+
+                <img
+                  class="live-avatar"
+                  src="${escapeHTML(
+                    avatar
+                  )}"
+                  alt="${escapeHTML(
+                    name
+                  )}"
+                >
+
+                <span class="online-dot"></span>
+
+              </div>
+
+              <div class="live-name">
+                ${escapeHTML(
+                  name
+                )}
+              </div>
+
+              <div class="live-mood">
+
+                ${mood?.emoji || "🙂"}
+
+                ${mood?.name || "No mood"}
+
+              </div>
 
             </div>
 
-            <div class="live-name">
-              ${escapeHTML(name)}
-            </div>
+          `;
 
-            <div class="live-mood">
-              ${mood?.emoji || "🙂"}
-              ${mood?.name || "No mood"}
-            </div>
-
-          </div>
-
-        `;
-
-      })
+        }
+      )
       .join("");
 
 
@@ -2477,20 +3359,22 @@ function renderLive() {
     .querySelectorAll(
       "[data-live-user]"
     )
-    .forEach(card => {
+    .forEach(
+      card => {
 
-      card.addEventListener(
-        "click",
-        () => {
+        card.addEventListener(
+          "click",
+          () => {
 
-          openPrivateChat(
-            card.dataset.liveUser
-          );
+            openPrivateChat(
+              card.dataset.liveUser
+            );
 
-        }
-      );
+          }
+        );
 
-    });
+      }
+    );
 
 }
 
@@ -2505,15 +3389,21 @@ function renderLeaderboard() {
     $("leaderboardList");
 
 
-  if (!list) return;
+  if (!list) {
+    return;
+  }
 
 
   const users =
     [...state.profiles]
       .sort(
         (a, b) =>
-          Number(b.points || 0) -
-          Number(a.points || 0)
+          Number(
+            b.points || 0
+          ) -
+          Number(
+            a.points || 0
+          )
       );
 
 
@@ -2588,9 +3478,13 @@ function renderLeaderboard() {
                 </div>
 
                 <div class="leader-points">
+
                   ${Number(
                     user.points || 0
-                  )} points
+                  )}
+
+                  points
+
                 </div>
 
               </div>
@@ -2614,31 +3508,74 @@ function renderLeaderboard() {
 // PROFILE PHOTO
 // ============================================================
 
-async function changeProfilePhoto(file) {
+async function changeProfilePhoto(
+  file
+) {
 
-  if (!state.user || !file) {
+  if (
+    !state.user ||
+    !file
+  ) {
+
     return;
+
   }
 
 
   try {
 
+    if (
+      !file.type ||
+      !file.type.startsWith(
+        "image/"
+      )
+    ) {
+
+      showToast(
+        "Please select an image."
+      );
+
+      return;
+
+    }
+
+
     showToast(
-      "Preparing photo..."
+      "Preparing profile photo..."
     );
 
+
+    // --------------------------------------------------------
+    // SMALLER SIZE FOR FIRESTORE
+    // --------------------------------------------------------
 
     const base64 =
       await compressImage(
         file,
-        650000
+        450000
       );
 
+
+    if (
+      !base64 ||
+      base64.length > 450000
+    ) {
+
+      throw new Error(
+        "Profile photo is too large."
+      );
+
+    }
+
+
+    // --------------------------------------------------------
+    // SAVE TO FIRESTORE
+    // --------------------------------------------------------
 
     await db
       .collection("profiles")
       .doc(state.user.uid)
-      .update({
+      .set({
 
         photoURL:
           base64,
@@ -2647,46 +3584,112 @@ async function changeProfilePhoto(file) {
           firebase.firestore.FieldValue
             .serverTimestamp()
 
+      }, {
+        merge: true
       });
 
 
-    state.profile.photoURL =
-      base64;
+    // --------------------------------------------------------
+    // UPDATE LOCAL PROFILE
+    // --------------------------------------------------------
+
+    if (!state.profile) {
+
+      state.profile = {
+
+        uid:
+          state.user.uid,
+
+        username:
+          "User",
+
+        email:
+          state.user.email ||
+          "",
+
+        gender:
+          "",
+
+        current_mood:
+          state.mood,
+
+        points:
+          0,
+
+        photoURL:
+          base64
+
+      };
+
+    } else {
+
+      state.profile.photoURL =
+        base64;
+
+    }
 
 
-    const me =
-      state.profiles.find(
+    // --------------------------------------------------------
+    // UPDATE PROFILE LIST
+    // --------------------------------------------------------
+
+    const index =
+      state.profiles.findIndex(
         user =>
           user.uid ===
           state.user.uid
       );
 
 
-    if (me) {
+    if (index >= 0) {
 
-      me.photoURL =
+      state.profiles[index].photoURL =
         base64;
+
+    } else {
+
+      state.profiles.push(
+        {
+          ...state.profile
+        }
+      );
 
     }
 
 
+    // --------------------------------------------------------
+    // UPDATE PRESENCE PHOTO
+    // --------------------------------------------------------
+
+    await updatePresence();
+
+
+    // --------------------------------------------------------
+    // REFRESH UI
+    // --------------------------------------------------------
+
     renderProfile();
+
+    renderLive();
+
+    renderLeaderboard();
 
 
     showToast(
-      "Profile photo updated."
+      "Profile picture updated successfully."
     );
 
 
   } catch (error) {
 
     console.error(
-      "Profile photo error:",
+      "PROFILE PHOTO ERROR:",
       error
     );
 
+
     showToast(
-      "Photo could not be updated."
+      "Profile picture could not be updated."
     );
 
   }
@@ -2698,9 +3701,13 @@ async function changeProfilePhoto(file) {
 // IMAGE VIEWER
 // ============================================================
 
-function openImage(src) {
+function openImage(
+  src
+) {
 
-  if (!src) return;
+  if (!src) {
+    return;
+  }
 
 
   const viewer =
@@ -2770,7 +3777,9 @@ function openImage(src) {
 
 
   viewer
-    .querySelector("button")
+    .querySelector(
+      "button"
+    )
     .addEventListener(
       "click",
       () => {
@@ -2806,7 +3815,7 @@ function openImage(src) {
 
 
 // ============================================================
-// TYPING INDICATOR
+// PUBLIC TYPING
 // ============================================================
 
 function setupPublicTyping() {
@@ -2815,15 +3824,37 @@ function setupPublicTyping() {
     $("messageInput");
 
 
-  if (!input) return;
+  if (!input) {
+    return;
+  }
+
+
+  // Prevent duplicate listeners.
+  if (
+    input.dataset.typingReady ===
+    "true"
+  ) {
+
+    return;
+
+  }
+
+
+  input.dataset.typingReady =
+    "true";
 
 
   input.addEventListener(
     "input",
     () => {
 
-      if (!state.user || !state.mood) {
+      if (
+        !state.user ||
+        !state.mood
+      ) {
+
         return;
+
       }
 
 
@@ -2843,7 +3874,8 @@ function setupPublicTyping() {
           "User",
 
         at:
-          firebase.database.ServerValue
+          firebase.database
+            .ServerValue
             .TIMESTAMP
 
       });
@@ -2870,13 +3902,33 @@ function setupPublicTyping() {
 }
 
 
+// ============================================================
+// PRIVATE TYPING
+// ============================================================
+
 function setupPrivateTyping() {
 
   const input =
     $("privateMessageInput");
 
 
-  if (!input) return;
+  if (!input) {
+    return;
+  }
+
+
+  if (
+    input.dataset.typingReady ===
+    "true"
+  ) {
+
+    return;
+
+  }
+
+
+  input.dataset.typingReady =
+    "true";
 
 
   input.addEventListener(
@@ -2887,8 +3939,13 @@ function setupPrivateTyping() {
         state.selectedPrivateUser;
 
 
-      if (!state.user || !person) {
+      if (
+        !state.user ||
+        !person
+      ) {
+
         return;
+
       }
 
 
@@ -2915,7 +3972,8 @@ function setupPrivateTyping() {
           "User",
 
         at:
-          firebase.database.ServerValue
+          firebase.database
+            .ServerValue
             .TIMESTAMP
 
       });
@@ -2948,12 +4006,22 @@ function setupPrivateTyping() {
 
 function startPublicTypingListener() {
 
-  if (!state.mood) return;
+  if (
+    !state.user ||
+    !state.mood
+  ) {
+
+    return;
+
+  }
 
 
   if (state.typingPublicRef) {
 
     state.typingPublicRef.off();
+
+    state.typingPublicRef =
+      null;
 
   }
 
@@ -2982,7 +4050,7 @@ function startPublicTypingListener() {
           )
           .map(
             ([, person]) =>
-              person.username
+              person?.username
           )
           .filter(Boolean);
 
@@ -2992,17 +4060,27 @@ function startPublicTypingListener() {
         $("typingIndicator").innerHTML =
           names.length
             ? `
+
               ${escapeHTML(
                 names.join(", ")
               )}
-              ${names.length === 1
-                ? " is"
-                : " are"} typing
+
+              ${
+                names.length === 1
+                  ? " is"
+                  : " are"
+              }
+
+              typing
+
               <span class="typing-dots">
+
                 <span></span>
                 <span></span>
                 <span></span>
+
               </span>
+
             `
             : "";
 
@@ -3024,14 +4102,22 @@ function startPrivateTypingListener() {
     state.selectedPrivateUser;
 
 
-  if (!person || !state.user) {
+  if (
+    !person ||
+    !state.user
+  ) {
+
     return;
+
   }
 
 
   if (state.typingPrivateRef) {
 
     state.typingPrivateRef.off();
+
+    state.typingPrivateRef =
+      null;
 
   }
 
@@ -3072,17 +4158,23 @@ function startPrivateTypingListener() {
         $("privateTyping").innerHTML =
           other
             ? `
+
               ${escapeHTML(
-                other[1].username ||
+                other[1]?.username ||
                 person.username ||
                 "User"
               )}
+
               is typing
+
               <span class="typing-dots">
+
                 <span></span>
                 <span></span>
                 <span></span>
+
               </span>
+
             `
             : "";
 
@@ -3098,17 +4190,23 @@ function startPrivateTypingListener() {
 // VIEW NAVIGATION
 // ============================================================
 
-function showView(viewId) {
+function showView(
+  viewId
+) {
 
   document
-    .querySelectorAll(".view")
-    .forEach(view => {
+    .querySelectorAll(
+      ".view"
+    )
+    .forEach(
+      view => {
 
-      view.classList.remove(
-        "active"
-      );
+        view.classList.remove(
+          "active"
+        );
 
-    });
+      }
+    );
 
 
   const view =
@@ -3125,14 +4223,18 @@ function showView(viewId) {
 
 
   document
-    .querySelectorAll(".nav-btn")
-    .forEach(button => {
+    .querySelectorAll(
+      ".nav-btn"
+    )
+    .forEach(
+      button => {
 
-      button.classList.remove(
-        "active"
-      );
+        button.classList.remove(
+          "active"
+        );
 
-    });
+      }
+    );
 
 
   const map = {
@@ -3162,7 +4264,9 @@ function showView(viewId) {
   if (buttonId) {
 
     $(buttonId)
-      ?.classList.add("active");
+      ?.classList.add(
+        "active"
+      );
 
   }
 
@@ -3219,10 +4323,14 @@ function showView(viewId) {
 function openDrawer() {
 
   $("drawer")
-    ?.classList.add("open");
+    ?.classList.add(
+      "open"
+    );
 
   $("drawerBg")
-    ?.classList.add("open");
+    ?.classList.add(
+      "open"
+    );
 
 }
 
@@ -3230,10 +4338,14 @@ function openDrawer() {
 function closeDrawer() {
 
   $("drawer")
-    ?.classList.remove("open");
+    ?.classList.remove(
+      "open"
+    );
 
   $("drawerBg")
-    ?.classList.remove("open");
+    ?.classList.remove(
+      "open"
+    );
 
 }
 
@@ -3245,7 +4357,9 @@ function closeDrawer() {
 function toggleProfilePopover() {
 
   $("profilePopover")
-    ?.classList.toggle("open");
+    ?.classList.toggle(
+      "open"
+    );
 
 }
 
@@ -3262,7 +4376,9 @@ function setupDarkMode() {
     );
 
 
-  if (saved === "true") {
+  if (
+    saved === "true"
+  ) {
 
     document.body.classList.add(
       "dark-mode"
@@ -3283,12 +4399,70 @@ async function logout() {
 
     if (state.user) {
 
-      await rtdb
-        .ref(
-          "presence/" +
-          state.user.uid
-        )
-        .remove();
+      try {
+
+        await rtdb
+          .ref(
+            "presence/" +
+            state.user.uid
+          )
+          .remove();
+
+      } catch (presenceError) {
+
+        console.error(
+          "Presence removal error:",
+          presenceError
+        );
+
+      }
+
+    }
+
+
+    if (myProfileUnsubscribe) {
+
+      myProfileUnsubscribe();
+
+      myProfileUnsubscribe =
+        null;
+
+    }
+
+
+    if (state.publicUnsubscribe) {
+
+      state.publicUnsubscribe();
+
+    }
+
+
+    if (state.privateUnsubscribe) {
+
+      state.privateUnsubscribe();
+
+    }
+
+
+    if (
+      state.conversationsUnsubscribe
+    ) {
+
+      state.conversationsUnsubscribe();
+
+    }
+
+
+    if (state.typingPublicRef) {
+
+      state.typingPublicRef.off();
+
+    }
+
+
+    if (state.typingPrivateRef) {
+
+      state.typingPrivateRef.off();
 
     }
 
@@ -3304,9 +4478,10 @@ async function logout() {
   } catch (error) {
 
     console.error(
-      "Logout error:",
+      "LOGOUT ERROR:",
       error
     );
+
 
     showToast(
       "Could not log out."
@@ -3341,59 +4516,118 @@ auth.onAuthStateChanged(
         user;
 
 
+      // ------------------------------------------------------
+      // LOAD PROFILE FIRST
+      // ------------------------------------------------------
+
       await loadMyProfile();
 
+
+      // ------------------------------------------------------
+      // GET CURRENT MOOD FROM FIREBASE
+      // ------------------------------------------------------
 
       state.mood =
         state.profile?.current_mood ||
         null;
 
 
+      // ------------------------------------------------------
+      // LOAD ALL USERS
+      // ------------------------------------------------------
+
       await loadAllProfiles();
 
+
+      // ------------------------------------------------------
+      // RENDER PROFILE
+      // ------------------------------------------------------
 
       renderProfile();
 
 
-      startPresence();
+      // ------------------------------------------------------
+      // REAL-TIME OWN PROFILE LISTENER
+      // ------------------------------------------------------
+
+      startMyProfileListener();
+
+
+      // ------------------------------------------------------
+      // PRESENCE
+      // ------------------------------------------------------
+
+      await startPresence();
+
+
+      // ------------------------------------------------------
+      // CONVERSATIONS
+      // ------------------------------------------------------
 
       startConversations();
+
+
+      // ------------------------------------------------------
+      // TYPING
+      // ------------------------------------------------------
 
       setupPublicTyping();
 
       setupPrivateTyping();
 
-      startPublicTypingListener();
 
+      // ------------------------------------------------------
+      // MOOD
+      // ------------------------------------------------------
 
       if (state.mood) {
 
         $("chooseMoodScreen")
-          ?.classList.add("hidden");
+          ?.classList.add(
+            "hidden"
+          );
 
 
         $("moodChatContent")
-          ?.classList.remove("hidden");
+          ?.classList.remove(
+            "hidden"
+          );
 
 
         $("publicComposer")
-          ?.classList.remove("hidden");
+          ?.classList.remove(
+            "hidden"
+          );
+
+
+        updateMoodUI();
 
 
         startPublicMessages();
 
+        startPublicTypingListener();
+
       } else {
 
         $("chooseMoodScreen")
-          ?.classList.remove("hidden");
+          ?.classList.remove(
+            "hidden"
+          );
 
 
         $("moodChatContent")
-          ?.classList.add("hidden");
+          ?.classList.add(
+            "hidden"
+          );
 
 
         $("publicComposer")
-          ?.classList.add("hidden");
+          ?.classList.add(
+            "hidden"
+          );
+
+
+        updateMoodUI();
 
 
         setTimeout(
@@ -3404,19 +4638,18 @@ auth.onAuthStateChanged(
       }
 
 
-      updateMoodUI();
-
-
       console.log(
         "MOODCHAT Home.js loaded successfully."
       );
 
+
     } catch (error) {
 
       console.error(
-        "MOODCHAT startup error:",
+        "MOODCHAT STARTUP ERROR:",
         error
       );
+
 
       showToast(
         "Could not load MOODCHAT."
@@ -3470,11 +4703,7 @@ $("chooseMoodBtn")
 $("popupOverlay")
   ?.addEventListener(
     "click",
-    () => {
-
-      closeMoodPicker();
-
-    }
+    closeMoodPicker
   );
 
 
@@ -3602,6 +4831,10 @@ $("privateImageBtn")
   );
 
 
+// ============================================================
+// PUBLIC IMAGE INPUT
+// ============================================================
+
 $("publicImageInput")
   ?.addEventListener(
     "change",
@@ -3620,11 +4853,16 @@ $("publicImageInput")
       }
 
 
-      event.target.value = "";
+      event.target.value =
+        "";
 
     }
   );
 
+
+// ============================================================
+// PRIVATE IMAGE INPUT
+// ============================================================
 
 $("privateImageInput")
   ?.addEventListener(
@@ -3644,11 +4882,16 @@ $("privateImageInput")
       }
 
 
-      event.target.value = "";
+      event.target.value =
+        "";
 
     }
   );
 
+
+// ============================================================
+// PROFILE IMAGE INPUT
+// ============================================================
 
 $("profileImageInput")
   ?.addEventListener(
@@ -3668,14 +4911,15 @@ $("profileImageInput")
       }
 
 
-      event.target.value = "";
+      event.target.value =
+        "";
 
     }
   );
 
 
 // ============================================================
-// ENTER TO SEND
+// ENTER TO SEND PUBLIC
 // ============================================================
 
 $("messageInput")
@@ -3684,7 +4928,8 @@ $("messageInput")
     event => {
 
       if (
-        event.key === "Enter" &&
+        event.key ===
+          "Enter" &&
         !event.shiftKey
       ) {
 
@@ -3698,13 +4943,18 @@ $("messageInput")
   );
 
 
+// ============================================================
+// ENTER TO SEND PRIVATE
+// ============================================================
+
 $("privateMessageInput")
   ?.addEventListener(
     "keydown",
     event => {
 
       if (
-        event.key === "Enter" &&
+        event.key ===
+          "Enter" &&
         !event.shiftKey
       ) {
 
@@ -3726,20 +4976,26 @@ document
   .querySelectorAll(
     ".mood-option"
   )
-  .forEach(button => {
+  .forEach(
+    button => {
 
-    button.addEventListener(
-      "click",
-      () => {
+      button.addEventListener(
+        "click",
+        () => {
 
-        setMood(
-          button.dataset.mood
-        );
+          const moodKey =
+            button.dataset.mood;
 
-      }
-    );
 
-  });
+          setMood(
+            moodKey
+          );
+
+        }
+      );
+
+    }
+  );
 
 
 // ============================================================
@@ -3757,16 +5013,56 @@ window.addEventListener(
   "beforeunload",
   () => {
 
-    if (state.typingPublicRef) {
+    if (
+      state.typingPublicRef
+    ) {
 
       state.typingPublicRef.off();
 
     }
 
 
-    if (state.typingPrivateRef) {
+    if (
+      state.typingPrivateRef
+    ) {
 
       state.typingPrivateRef.off();
+
+    }
+
+
+    if (
+      state.publicUnsubscribe
+    ) {
+
+      state.publicUnsubscribe();
+
+    }
+
+
+    if (
+      state.privateUnsubscribe
+    ) {
+
+      state.privateUnsubscribe();
+
+    }
+
+
+    if (
+      state.conversationsUnsubscribe
+    ) {
+
+      state.conversationsUnsubscribe();
+
+    }
+
+
+    if (
+      myProfileUnsubscribe
+    ) {
+
+      myProfileUnsubscribe();
 
     }
 
