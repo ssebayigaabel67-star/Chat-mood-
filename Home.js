@@ -1233,136 +1233,159 @@ async function setMood(moodKey) {
 
 }
 
-
 // ============================================================
-// PRESENCE
+// ONLINE PRESENCE
 // ============================================================
 
-async function startPresence() {
-
-  if (!state.user) {
-    return;
-  }
-
-
-  const ownRef =
-    rtdb.ref(
-      "presence/" +
-      state.user.uid
-    );
-
-
-  try {
-
-    await ownRef.onDisconnect().remove();
-
-  } catch (error) {
-
-    console.error(
-      "Presence disconnect setup error:",
-      error
-    );
-
-  }
-
-
-  await updatePresence();
-
-
-  if (state.presenceUnsubscribe) {
-
-    rtdb
-      .ref("presence")
-      .off(
-        "value",
-        state.presenceUnsubscribe
-      );
-
-  }
-
-
-  state.presenceUnsubscribe =
-    rtdb
-      .ref("presence")
-      .on(
-        "value",
-        snapshot => {
-
-          state.onlineUsers =
-            snapshot.val() || {};
-
-
-          updateOnlineCount();
-
-          renderLive();
-
-          updatePrivateStatus();
-
-        }
-      );
-
-}
-
-
-// ============================================================
-// UPDATE PRESENCE
-// ============================================================
+let presenceRef = null;
+let presenceListener = null;
 
 async function updatePresence() {
 
   if (!state.user) {
+    console.log("PRESENCE: No logged-in user.");
     return;
   }
 
-
-  const ref =
-    rtdb.ref(
-      "presence/" +
-      state.user.uid
-    );
-
-
   try {
 
-    await ref.set({
+    const database = firebase.database();
 
-      uid:
-        state.user.uid,
+    presenceRef = database.ref(
+      "presence/" + state.user.uid
+    );
 
-      username:
-        state.profile?.username ||
-        "User",
+    const username =
+      state.profile?.username ||
+      state.user.email?.split("@")[0] ||
+      "User";
 
-      mood:
-        state.mood ||
-        null,
+    const mood =
+      state.mood ||
+      state.profile?.current_mood ||
+      null;
 
-      gender:
-        state.profile?.gender ||
-        "",
+    const gender =
+      state.profile?.gender ||
+      "";
 
-      photoURL:
-        state.profile?.photoURL ||
-        "",
+    const photoURL =
+      state.profile?.photoURL ||
+      "";
 
+    const presenceData = {
+      uid: state.user.uid,
+      username: username,
+      mood: mood,
+      gender: gender,
+      photoURL: photoURL,
       lastSeen:
-        firebase.database.ServerValue
-          .TIMESTAMP
+        firebase.database.ServerValue.TIMESTAMP
+    };
 
-    });
+    await presenceRef.set(presenceData);
+
+    console.log(
+      "PRESENCE: Online status saved successfully."
+    );
 
   } catch (error) {
 
     console.error(
-      "UPDATE PRESENCE ERROR:",
+      "PRESENCE WRITE ERROR:",
       error
     );
 
-  }
+    console.error(
+      "PRESENCE ERROR CODE:",
+      error.code
+    );
 
+    showToast(
+      "Online status could not be updated."
+    );
+  }
 }
 
 
+async function startPresence() {
+
+  if (!state.user) {
+    console.log(
+      "PRESENCE: Cannot start without login."
+    );
+    return;
+  }
+
+  try {
+
+    const database = firebase.database();
+
+    presenceRef = database.ref(
+      "presence/" + state.user.uid
+    );
+
+    // Remove the user automatically when
+    // Firebase detects that the connection is lost.
+    await presenceRef.onDisconnect().remove();
+
+    // Mark this user online immediately.
+    await updatePresence();
+
+    console.log(
+      "PRESENCE: Started successfully."
+    );
+
+    // Watch all online users.
+    const allPresenceRef =
+      database.ref("presence");
+
+    if (presenceListener) {
+      allPresenceRef.off(
+        "value",
+        presenceListener
+      );
+    }
+
+    presenceListener = (snapshot) => {
+
+      const presenceData =
+        snapshot.val() || {};
+
+      state.onlineUsers = presenceData;
+
+      console.log(
+        "PRESENCE USERS:",
+        presenceData
+      );
+
+      updateOnlineCount();
+      renderLive();
+
+    };
+
+    allPresenceRef.on(
+      "value",
+      presenceListener
+    );
+
+  } catch (error) {
+
+    console.error(
+      "PRESENCE START ERROR:",
+      error
+    );
+
+    console.error(
+      "PRESENCE ERROR CODE:",
+      error.code
+    );
+
+    showToast(
+      "Could not connect to online users."
+    );
+  }
+}
 // ============================================================
 // ONLINE COUNT
 // ============================================================
