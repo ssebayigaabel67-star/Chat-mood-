@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
 <meta charset="UTF-8">
@@ -15,6 +16,7 @@
 >
 
 <title>MOODCHAT — Chat By Mood</title>
+
 
 <style>
 
@@ -42,26 +44,63 @@ body{
     Arial,
     sans-serif;
 
-  color:#24170f;
+  color:var(--text);
+}
+
+button,
+textarea,
+input{
+  font-family:inherit;
+}
+
+button{
+  -webkit-tap-highlight-color:transparent;
 }
 
 body{
   min-height:100vh;
 
+  --mood-accent:#f07b18;
+  --mood-accent-dark:#d45f05;
+  --mood-soft:#fff0d8;
+  --mood-bg:#fff4df;
+  --mood-panel:#ffffff;
+  --mood-border:#f1d19f;
+  --mood-shadow:rgba(210,110,20,.15);
+  --mood-glow:rgba(240,123,24,.30);
+
+  --text:#24170f;
+  --muted:#806f64;
+  --subtle:#a08e82;
+  --line:#eadbd0;
+
   background:
     radial-gradient(
-      circle at 8% 5%,
-      rgba(255,120,180,.25),
-      transparent 30%
+      circle at 7% 4%,
+      var(--mood-glow),
+      transparent 28%
     ),
     radial-gradient(
-      circle at 95% 90%,
-      rgba(255,180,80,.25),
-      transparent 35%
+      circle at 94% 92%,
+      rgba(255,255,255,.72),
+      transparent 34%
     ),
-    #fff7f0;
+    var(--mood-bg);
 
   overflow-x:hidden;
+
+  transition:
+    background .25s ease,
+    color .25s ease;
+}
+
+
+/* =========================================================
+   IMPORTANT HIDDEN CLASS
+========================================================= */
+
+.hidden{
+  display:none !important;
 }
 
 
@@ -71,6 +110,7 @@ body{
 
 #appScreen{
   min-height:100vh;
+
   display:flex;
   flex-direction:column;
 }
@@ -96,15 +136,25 @@ body{
     8px
     12px;
 
-  background:rgba(255,255,255,.95);
+  background:rgba(255,255,255,.94);
 
-  border-bottom:1px solid #eadbd0;
+  border-bottom:
+    2px solid
+    var(--mood-accent);
 
   box-shadow:
-    0 5px 22px rgba(70,40,20,.08);
+    0 6px 24px
+    var(--mood-shadow);
 
-  backdrop-filter:blur(12px);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+
+  transition:
+    background .25s ease,
+    border-color .25s ease,
+    box-shadow .25s ease;
 }
+
 
 .menu-btn{
   width:42px;
@@ -112,12 +162,12 @@ body{
 
   flex:0 0 42px;
 
-  border:0;
+  border:1px solid var(--mood-border);
   border-radius:13px;
 
-  background:#fff0e5;
+  background:var(--mood-soft);
 
-  color:#24170f;
+  color:var(--mood-accent-dark);
 
   font-size:21px;
 
@@ -125,11 +175,16 @@ body{
 
   display:grid;
   place-items:center;
+
+  transition:
+    transform .15s ease,
+    background .2s ease;
 }
 
 .menu-btn:active{
-  transform:scale(.95);
+  transform:scale(.94);
 }
+
 
 .app-title{
   min-width:0;
@@ -141,35 +196,49 @@ body{
   white-space:nowrap;
   overflow:hidden;
   text-overflow:ellipsis;
+
+  color:var(--text);
 }
 
 .app-title span{
   font-size:18px;
 }
 
+
 .top-mood{
-  border:0;
+  border:1px solid var(--mood-border);
 
   min-height:40px;
 
-  padding:8px 12px;
+  padding:
+    8px
+    12px;
 
   border-radius:13px;
 
-  background:#fff0e5;
+  background:var(--mood-soft);
 
-  color:#24170f;
+  color:var(--mood-accent-dark);
 
-  font-weight:900;
+  font-weight:950;
 
   cursor:pointer;
 
   white-space:nowrap;
+
+  box-shadow:
+    0 3px 10px
+    var(--mood-shadow);
+
+  transition:
+    transform .15s ease,
+    background .2s ease;
 }
 
 .top-mood:active{
-  transform:scale(.96);
+  transform:scale(.95);
 }
+
 
 .profile-btn{
   width:42px;
@@ -177,7 +246,9 @@ body{
 
   flex:0 0 42px;
 
-  border:2px solid #fff;
+  border:
+    3px solid
+    var(--mood-soft);
 
   border-radius:50%;
 
@@ -190,7 +261,16 @@ body{
   cursor:pointer;
 
   box-shadow:
-    0 2px 10px rgba(0,0,0,.12);
+    0 3px 12px
+    rgba(0,0,0,.14);
+
+  transition:
+    border-color .2s ease,
+    transform .15s ease;
+}
+
+.profile-btn:active{
+  transform:scale(.95);
 }
 
 .profile-btn img{
@@ -217,9 +297,9 @@ body{
   margin:0 auto;
 
   padding:
+    14px
     12px
-    12px
-    calc(90px + env(safe-area-inset-bottom));
+    calc(94px + env(safe-area-inset-bottom));
 
   position:relative;
 }
@@ -250,18 +330,38 @@ body{
 
   gap:10px;
 
-  margin-bottom:12px;
+  margin-bottom:13px;
 
-  padding:14px;
+  padding:15px;
 
-  border-radius:20px;
+  border-radius:21px;
 
   background:rgba(255,255,255,.94);
 
-  border:1px solid #eadbd0;
+  border:
+    1px solid
+    var(--mood-border);
 
   box-shadow:
-    0 8px 25px rgba(80,45,20,.07);
+    0 10px 30px
+    var(--mood-shadow);
+
+  position:relative;
+  overflow:hidden;
+}
+
+.room-header::before{
+  content:"";
+
+  position:absolute;
+
+  left:0;
+  top:0;
+  bottom:0;
+
+  width:4px;
+
+  background:var(--mood-accent);
 }
 
 .room-info{
@@ -271,12 +371,14 @@ body{
 .room-title{
   font-size:19px;
   font-weight:1000;
+
+  color:var(--text);
 }
 
 .room-subtitle{
   margin-top:3px;
 
-  color:#806f64;
+  color:var(--muted);
 
   font-size:12px;
 }
@@ -284,7 +386,9 @@ body{
 .online-count{
   flex:0 0 auto;
 
-  padding:7px 10px;
+  padding:
+    7px
+    10px;
 
   border-radius:12px;
 
@@ -293,8 +397,9 @@ body{
   color:#26834a;
 
   font-size:11px;
-
   font-weight:950;
+
+  border:1px solid #c8efd6;
 }
 
 
@@ -307,29 +412,35 @@ body{
 
   flex-direction:column;
 
-  gap:10px;
+  gap:11px;
 
   min-height:200px;
 }
 
 .empty-state{
-  padding:35px 20px;
+  padding:36px 20px;
 
   text-align:center;
 
-  color:#806f64;
+  color:var(--muted);
 
-  background:rgba(255,255,255,.8);
+  background:rgba(255,255,255,.78);
 
-  border:1px dashed #dfcfc3;
+  border:
+    1px dashed
+    var(--mood-border);
 
   border-radius:20px;
+
+  box-shadow:
+    0 6px 22px
+    var(--mood-shadow);
 }
 
 .empty-state .emoji{
   display:block;
 
-  font-size:38px;
+  font-size:40px;
 
   margin-bottom:8px;
 }
@@ -337,9 +448,11 @@ body{
 .empty-state strong{
   display:block;
 
-  color:#24170f;
+  color:var(--text);
 
   margin-bottom:4px;
+
+  font-size:14px;
 }
 
 
@@ -362,10 +475,10 @@ body{
 }
 
 .message-avatar{
-  width:37px;
-  height:37px;
+  width:38px;
+  height:38px;
 
-  flex:0 0 37px;
+  flex:0 0 38px;
 
   border-radius:50%;
 
@@ -373,14 +486,17 @@ body{
 
   background:#eadbd0;
 
-  border:2px solid #fff;
+  border:
+    2px solid
+    var(--mood-soft);
 
   box-shadow:
-    0 2px 8px rgba(0,0,0,.08);
+    0 3px 9px
+    rgba(0,0,0,.09);
 }
 
 .message-content{
-  max-width:78%;
+  max-width:79%;
 
   min-width:0;
 }
@@ -392,13 +508,12 @@ body{
 
   gap:5px;
 
-  margin-bottom:3px;
+  margin-bottom:4px;
 
   font-size:11px;
-
   font-weight:950;
 
-  color:#604d41;
+  color:var(--muted);
 }
 
 .message.mine .message-name{
@@ -411,43 +526,59 @@ body{
   align-items:center;
   justify-content:center;
 
-  width:18px;
-  height:18px;
+  width:19px;
+  height:19px;
 
   border-radius:50%;
 
   font-size:11px;
 
-  background:#fff0e5;
+  background:var(--mood-soft);
+
+  border:
+    1px solid
+    var(--mood-border);
 }
 
 .message-bubble{
-  padding:10px 12px;
+  padding:
+    10px
+    13px;
 
-  border-radius:16px;
+  border-radius:17px;
 
   background:#fff;
 
-  border:1px solid #eadbd0;
+  border:
+    1px solid
+    var(--mood-border);
 
   box-shadow:
-    0 3px 12px rgba(70,40,20,.05);
+    0 4px 14px
+    rgba(70,40,20,.06);
 
   overflow-wrap:anywhere;
 
   font-size:14px;
 
-  line-height:1.4;
+  line-height:1.45;
+
+  color:var(--text);
 }
 
 .message.mine .message-bubble{
-  background:#ff7a18;
+  background:var(--mood-accent);
 
   color:#fff;
 
-  border-color:#ff7a18;
+  border-color:
+    var(--mood-accent);
 
   border-bottom-right-radius:5px;
+
+  box-shadow:
+    0 5px 16px
+    var(--mood-shadow);
 }
 
 .message:not(.mine) .message-bubble{
@@ -455,11 +586,11 @@ body{
 }
 
 .message-time{
-  margin-top:3px;
+  margin-top:4px;
 
   font-size:9px;
 
-  color:#a08e82;
+  color:var(--subtle);
 }
 
 .message.mine .message-time{
@@ -477,9 +608,17 @@ body{
 
   margin-top:7px;
 
-  border-radius:12px;
+  border-radius:13px;
 
   cursor:pointer;
+
+  border:
+    1px solid
+    var(--mood-border);
+
+  box-shadow:
+    0 5px 18px
+    rgba(0,0,0,.10);
 }
 
 
@@ -490,15 +629,19 @@ body{
 .reply-box{
   margin-bottom:5px;
 
-  padding:6px 8px;
+  padding:
+    7px
+    9px;
 
-  border-left:3px solid #ff7a18;
+  border-left:
+    3px solid
+    var(--mood-accent);
 
-  border-radius:7px;
+  border-radius:8px;
 
-  background:#fff4ec;
+  background:var(--mood-soft);
 
-  color:#806f64;
+  color:var(--muted);
 
   font-size:10px;
 }
@@ -508,11 +651,11 @@ body{
 
   background:transparent;
 
-  color:#ff7a18;
+  color:var(--mood-accent-dark);
 
   font-size:10px;
 
-  font-weight:900;
+  font-weight:950;
 
   cursor:pointer;
 
@@ -527,9 +670,10 @@ body{
 .typing-indicator{
   min-height:22px;
 
-  padding:4px 4px;
+  padding:
+    4px;
 
-  color:#806f64;
+  color:var(--muted);
 
   font-size:11px;
 
@@ -550,7 +694,7 @@ body{
 
   border-radius:50%;
 
-  background:#ff7a18;
+  background:var(--mood-accent);
 
   animation:
     typingDot 1s infinite ease-in-out;
@@ -599,12 +743,16 @@ body{
 
   background:rgba(255,255,255,.97);
 
-  border-top:1px solid #eadbd0;
+  border-top:
+    2px solid
+    var(--mood-border);
 
   box-shadow:
-    0 -6px 25px rgba(70,40,20,.08);
+    0 -8px 28px
+    var(--mood-shadow);
 
-  backdrop-filter:blur(12px);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
 }
 
 .composer-inner{
@@ -631,28 +779,45 @@ body{
 
   resize:none;
 
-  border:1px solid #eadbd0;
+  border:
+    1px solid
+    var(--mood-border);
 
   border-radius:15px;
 
-  padding:11px 12px;
+  padding:
+    11px
+    12px;
 
   outline:none;
 
   background:#fff;
 
-  color:#24170f;
+  color:var(--text);
 
   font-family:inherit;
 
   font-size:14px;
+
+  box-shadow:
+    inset 0 1px 2px
+    rgba(0,0,0,.03);
+
+  transition:
+    border-color .2s ease,
+    box-shadow .2s ease;
 }
 
 .composer-input:focus{
-  border-color:#ff7a18;
+  border-color:var(--mood-accent);
 
   box-shadow:
-    0 0 0 3px rgba(255,122,24,.10);
+    0 0 0 3px
+    var(--mood-glow);
+}
+
+.composer-input::placeholder{
+  color:#a08e82;
 }
 
 .icon-btn{
@@ -661,13 +826,15 @@ body{
 
   flex:0 0 42px;
 
-  border:0;
+  border:
+    1px solid
+    var(--mood-border);
 
   border-radius:13px;
 
-  background:#fff0e5;
+  background:var(--mood-soft);
 
-  color:#604d41;
+  color:var(--mood-accent-dark);
 
   font-size:18px;
 
@@ -675,6 +842,10 @@ body{
 
   display:grid;
   place-items:center;
+
+  transition:
+    transform .15s ease,
+    background .2s ease;
 }
 
 .icon-btn:active{
@@ -687,11 +858,13 @@ body{
 
   flex:0 0 46px;
 
-  border:0;
+  border:
+    1px solid
+    var(--mood-accent);
 
   border-radius:13px;
 
-  background:#ff7a18;
+  background:var(--mood-accent);
 
   color:#fff;
 
@@ -701,10 +874,22 @@ body{
 
   display:grid;
   place-items:center;
+
+  box-shadow:
+    0 4px 12px
+    var(--mood-shadow);
+
+  transition:
+    transform .15s ease,
+    filter .2s ease;
 }
 
 .send-btn:active{
   transform:scale(.94);
+}
+
+.send-btn:hover{
+  filter:brightness(.96);
 }
 
 .hidden-input{
@@ -723,7 +908,7 @@ body{
 
   z-index:1100;
 
-  background:rgba(20,10,5,.38);
+  background:rgba(20,10,5,.42);
 
   opacity:0;
 
@@ -761,10 +946,13 @@ body{
 
   background:#fffaf6;
 
-  border-right:1px solid #eadbd0;
+  border-right:
+    2px solid
+    var(--mood-border);
 
   box-shadow:
-    12px 0 40px rgba(50,25,10,.18);
+    12px 0 40px
+    rgba(50,25,10,.20);
 
   transform:translateX(-105%);
 
@@ -785,9 +973,14 @@ body{
 
   gap:10px;
 
-  padding:5px 5px 18px;
+  padding:
+    5px
+    5px
+    18px;
 
-  border-bottom:1px solid #eadbd0;
+  border-bottom:
+    1px solid
+    var(--mood-border);
 
   margin-bottom:12px;
 }
@@ -802,10 +995,13 @@ body{
 
   background:#eadbd0;
 
-  border:2px solid #fff;
+  border:
+    3px solid
+    var(--mood-soft);
 
   box-shadow:
-    0 3px 12px rgba(0,0,0,.10);
+    0 4px 13px
+    rgba(0,0,0,.10);
 }
 
 .drawer-user{
@@ -814,7 +1010,10 @@ body{
 
 .drawer-name{
   font-size:15px;
+
   font-weight:1000;
+
+  color:var(--text);
 
   overflow:hidden;
 
@@ -826,7 +1025,7 @@ body{
 .side-mood{
   margin-top:3px;
 
-  color:#806f64;
+  color:var(--muted);
 
   font-size:11px;
 
@@ -839,11 +1038,15 @@ body{
   width:35px;
   height:35px;
 
-  border:0;
+  border:
+    1px solid
+    var(--mood-border);
 
   border-radius:11px;
 
-  background:#fff0e5;
+  background:var(--mood-soft);
+
+  color:var(--mood-accent-dark);
 
   cursor:pointer;
 
@@ -855,7 +1058,7 @@ body{
     8px
     7px;
 
-  color:#a08e82;
+  color:var(--subtle);
 
   font-size:10px;
 
@@ -875,11 +1078,15 @@ body{
 
   gap:11px;
 
-  padding:12px 11px;
+  padding:
+    12px
+    11px;
 
   margin:3px 0;
 
-  border:0;
+  border:
+    1px solid
+    transparent;
 
   border-radius:13px;
 
@@ -894,16 +1101,31 @@ body{
   font-weight:900;
 
   cursor:pointer;
+
+  transition:
+    background .2s ease,
+    color .2s ease,
+    transform .15s ease;
 }
 
 .nav-btn:hover{
-  background:#fff0e5;
+  background:var(--mood-soft);
+
+  color:var(--mood-accent-dark);
+}
+
+.nav-btn:active{
+  transform:scale(.98);
 }
 
 .nav-btn.active{
-  background:#ff7a18;
+  background:var(--mood-accent);
 
   color:#fff;
+
+  box-shadow:
+    0 5px 15px
+    var(--mood-shadow);
 }
 
 .nav-icon{
@@ -925,7 +1147,9 @@ body{
 
   place-items:center;
 
-  padding:0 5px;
+  padding:
+    0
+    5px;
 
   border-radius:10px;
 
@@ -957,6 +1181,12 @@ body{
 
   background:#fff;
 
+  border:
+    2px solid
+    var(--mood-border);
+
+  border-bottom:0;
+
   border-radius:
     24px
     24px
@@ -964,7 +1194,8 @@ body{
     0;
 
   box-shadow:
-    0 -15px 50px rgba(50,25,10,.18);
+    0 -15px 50px
+    rgba(50,25,10,.20);
 
   transform:
     translate(-50%,110%);
@@ -986,6 +1217,8 @@ body{
   font-weight:1000;
 
   margin-bottom:14px;
+
+  color:var(--text);
 }
 
 .mood-grid{
@@ -998,23 +1231,43 @@ body{
 }
 
 .mood-option{
-  border:1px solid #eadbd0;
+  border:
+    1px solid
+    var(--mood-border);
 
   border-radius:16px;
 
   background:#fffaf6;
 
-  padding:13px 7px;
+  padding:
+    13px
+    7px;
 
   cursor:pointer;
 
   text-align:center;
 
-  color:#24170f;
+  color:var(--text);
+
+  transition:
+    transform .15s ease,
+    border-color .2s ease,
+    background .2s ease,
+    box-shadow .2s ease;
+}
+
+.mood-option:hover{
+  border-color:var(--mood-accent);
+
+  background:var(--mood-soft);
+
+  box-shadow:
+    0 5px 16px
+    var(--mood-shadow);
 }
 
 .mood-option:active{
-  transform:scale(.97);
+  transform:scale(.96);
 }
 
 .mood-option .big{
@@ -1036,7 +1289,7 @@ body{
 
   margin-top:2px;
 
-  color:#806f64;
+  color:var(--muted);
 
   font-size:9px;
 }
@@ -1053,7 +1306,7 @@ body{
 
   z-index:1400;
 
-  background:rgba(20,10,5,.35);
+  background:rgba(20,10,5,.38);
 
   opacity:0;
 
@@ -1093,10 +1346,13 @@ body{
 
   background:#fff;
 
-  border:1px solid #eadbd0;
+  border:
+    1px solid
+    var(--mood-border);
 
   box-shadow:
-    0 15px 45px rgba(50,25,10,.18);
+    0 15px 45px
+    rgba(50,25,10,.20);
 
   opacity:0;
 
@@ -1122,7 +1378,9 @@ body{
 
   padding-bottom:15px;
 
-  border-bottom:1px solid #eadbd0;
+  border-bottom:
+    1px solid
+    var(--mood-border);
 }
 
 .profile-big-avatar{
@@ -1133,7 +1391,9 @@ body{
 
   border-radius:50%;
 
-  border:4px solid #fff0e5;
+  border:
+    4px solid
+    var(--mood-soft);
 
   background:#eadbd0;
 }
@@ -1144,10 +1404,12 @@ body{
   font-size:18px;
 
   font-weight:1000;
+
+  color:var(--text);
 }
 
 .profile-handle{
-  color:#806f64;
+  color:var(--muted);
 
   font-size:11px;
 }
@@ -1164,23 +1426,31 @@ body{
 }
 
 .profile-stat{
-  padding:9px 5px;
+  padding:
+    9px
+    5px;
 
   text-align:center;
 
   border-radius:12px;
 
-  background:#fff7f0;
+  background:var(--mood-soft);
+
+  border:
+    1px solid
+    var(--mood-border);
 }
 
 .profile-stat strong{
   display:block;
 
   font-size:15px;
+
+  color:var(--text);
 }
 
 .profile-stat span{
-  color:#806f64;
+  color:var(--muted);
 
   font-size:9px;
 }
@@ -1201,7 +1471,7 @@ body{
 
   flex-direction:column;
 
-  background:#fffaf6;
+  background:var(--mood-bg);
 
   transform:translateX(105%);
 
@@ -1224,25 +1494,34 @@ body{
 
   gap:10px;
 
-  padding:8px 10px;
+  padding:
+    8px
+    10px;
 
   background:#fff;
 
-  border-bottom:1px solid #eadbd0;
+  border-bottom:
+    2px solid
+    var(--mood-border);
 
   box-shadow:
-    0 3px 15px rgba(50,25,10,.07);
+    0 4px 16px
+    var(--mood-shadow);
 }
 
 .private-back{
   width:40px;
   height:40px;
 
-  border:0;
+  border:
+    1px solid
+    var(--mood-border);
 
   border-radius:12px;
 
-  background:#fff0e5;
+  background:var(--mood-soft);
+
+  color:var(--mood-accent-dark);
 
   cursor:pointer;
 
@@ -1258,10 +1537,15 @@ body{
   object-fit:cover;
 
   background:#eadbd0;
+
+  border:
+    2px solid
+    var(--mood-soft);
 }
 
 .private-user{
   min-width:0;
+
   flex:1;
 }
 
@@ -1269,6 +1553,8 @@ body{
   font-weight:1000;
 
   font-size:14px;
+
+  color:var(--text);
 
   white-space:nowrap;
 
@@ -1278,11 +1564,11 @@ body{
 }
 
 .private-match{
-  color:#ff7a18;
+  color:var(--mood-accent-dark);
 
   font-size:10px;
 
-  font-weight:900;
+  font-weight:950;
 
   white-space:nowrap;
 
@@ -1294,7 +1580,7 @@ body{
 .private-status{
   font-size:10px;
 
-  color:#806f64;
+  color:var(--muted);
 }
 
 .private-feed{
@@ -1322,7 +1608,13 @@ body{
 
   background:rgba(255,255,255,.97);
 
-  border-top:1px solid #eadbd0;
+  border-top:
+    2px solid
+    var(--mood-border);
+
+  box-shadow:
+    0 -8px 28px
+    var(--mood-shadow);
 
   display:flex;
 
@@ -1337,14 +1629,17 @@ body{
 .section-card{
   background:#fff;
 
-  border:1px solid #eadbd0;
+  border:
+    1px solid
+    var(--mood-border);
 
   border-radius:20px;
 
   overflow:hidden;
 
   box-shadow:
-    0 7px 25px rgba(70,40,20,.06);
+    0 9px 28px
+    var(--mood-shadow);
 }
 
 .section-heading{
@@ -1354,7 +1649,11 @@ body{
 
   font-weight:1000;
 
-  border-bottom:1px solid #eadbd0;
+  color:var(--text);
+
+  border-bottom:
+    1px solid
+    var(--mood-border);
 }
 
 .conversation{
@@ -1366,17 +1665,26 @@ body{
 
   width:100%;
 
-  padding:12px 14px;
+  padding:
+    12px
+    14px;
 
   border:0;
 
-  border-bottom:1px solid #f1e7e0;
+  border-bottom:
+    1px solid
+    #f1e7e0;
 
   background:#fff;
+
+  color:var(--text);
 
   text-align:left;
 
   cursor:pointer;
+
+  transition:
+    background .2s ease;
 }
 
 .conversation:last-child{
@@ -1384,7 +1692,7 @@ body{
 }
 
 .conversation:active{
-  background:#fff7f0;
+  background:var(--mood-soft);
 }
 
 .conversation-avatar{
@@ -1398,10 +1706,15 @@ body{
   object-fit:cover;
 
   background:#eadbd0;
+
+  border:
+    2px solid
+    var(--mood-soft);
 }
 
 .conversation-info{
   min-width:0;
+
   flex:1;
 }
 
@@ -1414,7 +1727,7 @@ body{
 .conversation-preview{
   margin-top:2px;
 
-  color:#806f64;
+  color:var(--muted);
 
   font-size:11px;
 
@@ -1426,16 +1739,19 @@ body{
 }
 
 .conversation-time{
-  color:#a08e82;
+  color:var(--subtle);
 
   font-size:9px;
 }
 
 .unread{
   min-width:20px;
+
   height:20px;
 
-  padding:0 5px;
+  padding:
+    0
+    5px;
 
   display:grid;
 
@@ -1473,18 +1789,29 @@ body{
 
   background:#fff;
 
-  border:1px solid #eadbd0;
+  border:
+    1px solid
+    var(--mood-border);
 
   text-align:center;
 
   cursor:pointer;
 
   box-shadow:
-    0 5px 18px rgba(70,40,20,.05);
+    0 6px 20px
+    var(--mood-shadow);
+
+  transition:
+    transform .15s ease,
+    border-color .2s ease;
 }
 
 .live-card:active{
-  transform:scale(.98);
+  transform:scale(.97);
+}
+
+.live-card:hover{
+  border-color:var(--mood-accent);
 }
 
 .live-avatar-wrap{
@@ -1503,7 +1830,9 @@ body{
 
   background:#eadbd0;
 
-  border:3px solid #fff;
+  border:
+    3px solid
+    var(--mood-soft);
 }
 
 .online-dot{
@@ -1519,7 +1848,9 @@ body{
 
   background:#35c76b;
 
-  border:3px solid #fff;
+  border:
+    3px solid
+    #fff;
 }
 
 .live-name{
@@ -1528,6 +1859,8 @@ body{
   font-weight:950;
 
   font-size:13px;
+
+  color:var(--text);
 
   overflow:hidden;
 
@@ -1539,7 +1872,7 @@ body{
 .live-mood{
   margin-top:3px;
 
-  color:#806f64;
+  color:var(--muted);
 
   font-size:10px;
 }
@@ -1562,9 +1895,13 @@ body{
 
   gap:10px;
 
-  padding:12px 14px;
+  padding:
+    12px
+    14px;
 
-  border-bottom:1px solid #f1e7e0;
+  border-bottom:
+    1px solid
+    #f1e7e0;
 }
 
 .leader-row:last-child{
@@ -1590,10 +1927,15 @@ body{
   object-fit:cover;
 
   background:#eadbd0;
+
+  border:
+    2px solid
+    var(--mood-soft);
 }
 
 .leader-info{
   min-width:0;
+
   flex:1;
 }
 
@@ -1601,12 +1943,14 @@ body{
   font-size:13px;
 
   font-weight:950;
+
+  color:var(--text);
 }
 
 .leader-points{
   margin-top:2px;
 
-  color:#806f64;
+  color:var(--muted);
 
   font-size:10px;
 }
@@ -1616,7 +1960,7 @@ body{
 
   font-weight:1000;
 
-  color:#ff7a18;
+  color:var(--mood-accent-dark);
 }
 
 
@@ -1631,12 +1975,15 @@ body{
 
   background:#fff;
 
-  border:1px solid #eadbd0;
+  border:
+    1px solid
+    var(--mood-border);
 
   border-radius:22px;
 
   box-shadow:
-    0 7px 25px rgba(70,40,20,.06);
+    0 9px 28px
+    var(--mood-shadow);
 }
 
 .my-profile-avatar{
@@ -1649,7 +1996,13 @@ body{
 
   background:#eadbd0;
 
-  border:4px solid #fff0e5;
+  border:
+    4px solid
+    var(--mood-soft);
+
+  box-shadow:
+    0 5px 18px
+    var(--mood-shadow);
 }
 
 .profile-upload{
@@ -1657,13 +2010,19 @@ body{
 
   margin-top:9px;
 
-  padding:8px 12px;
+  padding:
+    8px
+    12px;
+
+  border:
+    1px solid
+    var(--mood-border);
 
   border-radius:11px;
 
-  background:#fff0e5;
+  background:var(--mood-soft);
 
-  color:#604d41;
+  color:var(--mood-accent-dark);
 
   font-size:10px;
 
@@ -1678,10 +2037,12 @@ body{
   font-size:21px;
 
   font-weight:1000;
+
+  color:var(--text);
 }
 
 .my-profile-email{
-  color:#806f64;
+  color:var(--muted);
 
   font-size:11px;
 
@@ -1697,11 +2058,19 @@ body{
 
   margin-top:8px;
 
-  padding:7px 10px;
+  padding:
+    7px
+    10px;
 
   border-radius:12px;
 
-  background:#fff0e5;
+  background:var(--mood-soft);
+
+  border:
+    1px solid
+    var(--mood-border);
+
+  color:var(--mood-accent-dark);
 
   font-size:11px;
 
@@ -1724,7 +2093,11 @@ body{
 
   border-radius:14px;
 
-  background:#fff7f0;
+  background:var(--mood-soft);
+
+  border:
+    1px solid
+    var(--mood-border);
 
   text-align:left;
 }
@@ -1732,7 +2105,7 @@ body{
 .detail-box span{
   display:block;
 
-  color:#806f64;
+  color:var(--muted);
 
   font-size:9px;
 
@@ -1741,6 +2114,8 @@ body{
 
 .detail-box strong{
   font-size:13px;
+
+  color:var(--text);
 
   word-break:break-word;
 }
@@ -1758,6 +2133,8 @@ body{
 
 .logout-side:hover{
   background:#fff0f0;
+
+  color:#c52f2f;
 }
 
 
@@ -1769,13 +2146,16 @@ body{
   position:fixed;
 
   left:50%;
+
   bottom:90px;
 
   z-index:3000;
 
   max-width:90%;
 
-  padding:11px 15px;
+  padding:
+    11px
+    15px;
 
   border-radius:13px;
 
@@ -1811,64 +2191,232 @@ body{
    MOOD THEMES
 ========================================================= */
 
+/* -------------------------
+   FLIRTY
+------------------------- */
+
 body.mood-flirty{
-  background:
-    radial-gradient(
-      circle at 10% 5%,
-      rgba(255,79,129,.25),
-      transparent 30%
-    ),
-    #fff6f8;
+  --mood-accent:#e83e75;
+  --mood-accent-dark:#bd2457;
+  --mood-soft:#ffe4ee;
+  --mood-bg:#fff1f6;
+  --mood-panel:#fff;
+  --mood-border:#f3bfd1;
+  --mood-shadow:rgba(190,50,95,.15);
+  --mood-glow:rgba(232,62,117,.30);
 }
+
+
+/* -------------------------
+   SAD
+------------------------- */
 
 body.mood-sad{
-  background:
-    radial-gradient(
-      circle at 10% 5%,
-      rgba(93,120,214,.25),
-      transparent 30%
-    ),
-    #f5f7ff;
+  --mood-accent:#4f78d8;
+  --mood-accent-dark:#355db8;
+  --mood-soft:#e8efff;
+  --mood-bg:#eef4ff;
+  --mood-panel:#fff;
+  --mood-border:#c7d7fb;
+  --mood-shadow:rgba(50,90,170,.15);
+  --mood-glow:rgba(79,120,216,.28);
 }
+
+
+/* -------------------------
+   VEXED
+------------------------- */
 
 body.mood-vexed{
-  background:
-    radial-gradient(
-      circle at 10% 5%,
-      rgba(233,75,69,.22),
-      transparent 30%
-    ),
-    #fff7f6;
+  --mood-accent:#e64b45;
+  --mood-accent-dark:#be302b;
+  --mood-soft:#ffe5e3;
+  --mood-bg:#fff0ee;
+  --mood-panel:#fff;
+  --mood-border:#f3c4c1;
+  --mood-shadow:rgba(190,48,43,.15);
+  --mood-glow:rgba(230,75,69,.28);
 }
+
+
+/* -------------------------
+   HAPPY
+------------------------- */
 
 body.mood-happy{
-  background:
-    radial-gradient(
-      circle at 10% 5%,
-      rgba(255,122,24,.28),
-      transparent 30%
-    ),
-    #fff8ef;
+  --mood-accent:#f07b18;
+  --mood-accent-dark:#d45f05;
+  --mood-soft:#fff0d8;
+  --mood-bg:#fff4df;
+  --mood-panel:#fff;
+  --mood-border:#f1d19f;
+  --mood-shadow:rgba(210,110,20,.15);
+  --mood-glow:rgba(240,123,24,.30);
 }
+
+
+/* -------------------------
+   BORED
+------------------------- */
 
 body.mood-bored{
-  background:
-    radial-gradient(
-      circle at 10% 5%,
-      rgba(128,100,184,.20),
-      transparent 30%
-    ),
-    #faf8ff;
+  --mood-accent:#7658b8;
+  --mood-accent-dark:#5a4197;
+  --mood-soft:#eee9ff;
+  --mood-bg:#f2efff;
+  --mood-panel:#fff;
+  --mood-border:#d4c9f2;
+  --mood-shadow:rgba(100,75,160,.15);
+  --mood-glow:rgba(118,88,184,.25);
 }
 
+
+/* -------------------------
+   HEARTBROKEN
+------------------------- */
+
 body.mood-heartbroken{
+  --mood-accent:#a94370;
+  --mood-accent-dark:#823153;
+  --mood-soft:#fbe3ee;
+  --mood-bg:#f9edf4;
+  --mood-panel:#fff;
+  --mood-border:#e8bfd1;
+  --mood-shadow:rgba(130,48,83,.15);
+  --mood-glow:rgba(169,67,112,.28);
+}
+
+
+/* =========================================================
+   STRONG MOOD VISUAL EFFECTS
+   STATIC — NO RAINBOW ANIMATION
+========================================================= */
+
+body[class*="mood-"]{
   background:
     radial-gradient(
-      circle at 10% 5%,
-      rgba(189,78,117,.23),
-      transparent 30%
+      circle at 7% 4%,
+      var(--mood-glow),
+      transparent 28%
     ),
-    #fff7fa;
+    radial-gradient(
+      circle at 94% 92%,
+      rgba(255,255,255,.72),
+      transparent 34%
+    ),
+    var(--mood-bg);
+}
+
+body[class*="mood-"] .topbar{
+  border-bottom:
+    2px solid
+    var(--mood-accent);
+
+  box-shadow:
+    0 6px 24px
+    var(--mood-shadow);
+}
+
+body[class*="mood-"] .menu-btn,
+body[class*="mood-"] .top-mood,
+body[class*="mood-"] .icon-btn,
+body[class*="mood-"] .private-back,
+body[class*="mood-"] .drawer-close,
+body[class*="mood-"] .profile-upload{
+  background:var(--mood-soft);
+
+  color:var(--mood-accent-dark);
+
+  border-color:
+    var(--mood-border);
+}
+
+body[class*="mood-"] .room-header,
+body[class*="mood-"] .section-card,
+body[class*="mood-"] .my-profile,
+body[class*="mood-"] .live-card,
+body[class*="mood-"] .profile-popover,
+body[class*="mood-"] .private-head,
+body[class*="mood-"] .choose-mood-card{
+  border-color:
+    var(--mood-border);
+
+  box-shadow:
+    0 10px 30px
+    var(--mood-shadow);
+}
+
+body[class*="mood-"] .send-btn,
+body[class*="mood-"] .choose-mood-btn,
+body[class*="mood-"] .nav-btn.active,
+body[class*="mood-"] .message.mine .message-bubble{
+  background:var(--mood-accent);
+
+  border-color:
+    var(--mood-accent);
+}
+
+body[class*="mood-"] .message.mine .message-bubble{
+  color:#fff;
+}
+
+body[class*="mood-"] .message:not(.mine) .message-bubble,
+body[class*="mood-"] .conversation,
+body[class*="mood-"] .mood-option{
+  border-color:
+    var(--mood-border);
+}
+
+body[class*="mood-"] .reply-box{
+  border-left-color:
+    var(--mood-accent);
+
+  background:var(--mood-soft);
+}
+
+body[class*="mood-"] .reply-action,
+body[class*="mood-"] .private-match,
+body[class*="mood-"] .leader-rank{
+  color:
+    var(--mood-accent-dark);
+}
+
+body[class*="mood-"] .composer,
+body[class*="mood-"] .private-composer{
+  border-top-color:
+    var(--mood-border);
+
+  box-shadow:
+    0 -8px 28px
+    var(--mood-shadow);
+}
+
+body[class*="mood-"] .composer-input:focus{
+  border-color:
+    var(--mood-accent);
+
+  box-shadow:
+    0 0 0 3px
+    var(--mood-glow);
+}
+
+body[class*="mood-"] .profile-big-avatar,
+body[class*="mood-"] .my-profile-avatar,
+body[class*="mood-"] .live-avatar,
+body[class*="mood-"] .leader-avatar,
+body[class*="mood-"] .conversation-avatar{
+  border-color:
+    var(--mood-soft);
+}
+
+body[class*="mood-"] .my-profile-mood,
+body[class*="mood-"] .profile-stat,
+body[class*="mood-"] .detail-box,
+body[class*="mood-"] .mood-badge{
+  background:var(--mood-soft);
+
+  border-color:
+    var(--mood-border);
 }
 
 
@@ -1882,6 +2430,7 @@ body.mood-heartbroken{
   display:flex;
 
   align-items:center;
+
   justify-content:center;
 
   text-align:center;
@@ -1890,149 +2439,101 @@ body.mood-heartbroken{
 .choose-mood-card{
   width:min(420px,100%);
 
-  padding:25px;
+  padding:27px 22px;
 
   background:#fff;
 
-  border:1px solid #eadbd0;
+  border:
+    1px solid
+    var(--mood-border);
 
   border-radius:24px;
 
   box-shadow:
-    0 12px 35px rgba(70,40,20,.08);
+    0 12px 35px
+    var(--mood-shadow);
 }
 
 .choose-mood-card .emoji{
-  font-size:48px;
+  font-size:50px;
 }
 
 .choose-mood-card h2{
-  margin:10px 0 5px;
+  margin:
+    10px
+    0
+    5px;
 
   font-size:21px;
+
+  color:var(--text);
 }
 
 .choose-mood-card p{
-  margin:0 0 16px;
+  margin:
+    0
+    0
+    16px;
 
-  color:#806f64;
+  color:var(--muted);
 
   font-size:12px;
 }
 
 .choose-mood-btn{
-  border:0;
+  border:
+    1px solid
+    var(--mood-accent);
 
-  padding:12px 18px;
+  padding:
+    12px
+    18px;
 
   border-radius:13px;
 
-  background:#ff7a18;
+  background:var(--mood-accent);
 
   color:#fff;
 
   font-weight:950;
 
   cursor:pointer;
+
+  box-shadow:
+    0 5px 15px
+    var(--mood-shadow);
 }
 
 
 /* =========================================================
-   DESKTOP
-========================================================= */
-
-@media(min-width:700px){
-
-  .main{
-    padding-left:20px;
-    padding-right:20px;
-  }
-
-  .live-grid{
-    grid-template-columns:
-      repeat(3,minmax(0,1fr));
-  }
-
-  .composer{
-    padding-left:20px;
-    padding-right:20px;
-  }
-
-}
-
-
-/* =========================================================
-   SMALL PHONES
-========================================================= */
-
-@media(max-width:380px){
-
-  .topbar{
-    gap:6px;
-
-    padding-left:7px;
-    padding-right:7px;
-  }
-
-  .app-title{
-    font-size:16px;
-  }
-
-  .top-mood{
-    padding-left:8px;
-    padding-right:8px;
-
-    font-size:11px;
-  }
-
-  .profile-btn{
-    width:38px;
-    height:38px;
-
-    flex-basis:38px;
-  }
-
-  .menu-btn{
-    width:38px;
-    height:38px;
-
-    flex-basis:38px;
-  }
-
-  .composer{
-    padding-left:6px;
-    padding-right:6px;
-  }
-
-  .icon-btn{
-    width:38px;
-    height:40px;
-
-    flex-basis:38px;
-  }
-
-  .send-btn{
-    width:42px;
-    height:40px;
-
-    flex-basis:42px;
-  }
-
-  .live-grid{
-    grid-template-columns:1fr 1fr;
-  }
-
-}
-
-
-/* =========================================================
-   DARK MODE SUPPORT
+   DARK MODE
 ========================================================= */
 
 body.dark-mode{
-  color:#f5eee9;
+
+  --text:#f7eee8;
+  --muted:#c7b8ae;
+  --subtle:#a9988d;
+  --line:#49362b;
 
   background:#17120f;
+
+  color:var(--text);
+}
+
+body.dark-mode[class*="mood-"]{
+  background:
+    radial-gradient(
+      circle at 7% 4%,
+      var(--mood-glow),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 94% 92%,
+      rgba(255,255,255,.035),
+      transparent 34%
+    ),
+    #17120f;
 }
 
 body.dark-mode .topbar,
@@ -2045,20 +2546,26 @@ body.dark-mode .live-card,
 body.dark-mode .my-profile,
 body.dark-mode .profile-popover,
 body.dark-mode .private-popover,
-body.dark-mode .private-head{
+body.dark-mode .private-head,
+body.dark-mode .choose-mood-card,
+body.dark-mode .mood-popover{
   background:#211914;
 
-  border-color:#3b2c24;
+  border-color:
+    #49362b;
 }
 
 body.dark-mode .menu-btn,
 body.dark-mode .top-mood,
 body.dark-mode .icon-btn,
 body.dark-mode .private-back,
-body.dark-mode .drawer-close{
+body.dark-mode .drawer-close,
+body.dark-mode .profile-upload{
   background:#30231c;
 
-  color:#f5eee9;
+  color:#f7eee8;
+
+  border-color:#49362b;
 }
 
 body.dark-mode .app-title,
@@ -2071,7 +2578,9 @@ body.dark-mode .conversation-name,
 body.dark-mode .live-name,
 body.dark-mode .drawer-name,
 body.dark-mode .message-bubble,
-body.dark-mode .choose-mood-card h2{
+body.dark-mode .choose-mood-card h2,
+body.dark-mode .detail-box strong,
+body.dark-mode .profile-stat strong{
   color:#fff;
 }
 
@@ -2088,14 +2597,21 @@ body.dark-mode .private-status,
 body.dark-mode .profile-stat span,
 body.dark-mode .detail-box span,
 body.dark-mode .choose-mood-card p,
-body.dark-mode .typing-indicator{
+body.dark-mode .typing-indicator,
+body.dark-mode .empty-state{
   color:#c7b8ae;
 }
 
 body.dark-mode .conversation{
   background:#211914;
 
+  color:#fff;
+
   border-color:#3b2c24;
+}
+
+body.dark-mode .conversation:active{
+  background:#30231c;
 }
 
 body.dark-mode .composer-input{
@@ -2106,22 +2622,227 @@ body.dark-mode .composer-input{
   border-color:#49362b;
 }
 
+body.dark-mode .composer-input::placeholder{
+  color:#8f7e73;
+}
+
 body.dark-mode .mood-option,
 body.dark-mode .profile-stat,
 body.dark-mode .detail-box{
   background:#2a1f19;
 
-  border-color:#3b2c24;
+  border-color:#49362b;
 }
 
 body.dark-mode .mood-option{
   color:#fff;
 }
 
+body.dark-mode .mood-option small{
+  color:#c7b8ae;
+}
+
 body.dark-mode .profile-upload{
+  color:#fff;
+}
+
+body.dark-mode .empty-state{
+  background:#211914;
+
+  border-color:#49362b;
+}
+
+body.dark-mode .empty-state strong{
+  color:#fff;
+}
+
+body.dark-mode .message:not(.mine) .message-bubble{
+  background:#2a1f19;
+
+  color:#fff;
+
+  border-color:#49362b;
+}
+
+body.dark-mode .nav-btn{
+  color:#d9cbc2;
+}
+
+body.dark-mode .nav-btn:hover{
   background:#30231c;
 
   color:#fff;
+}
+
+body.dark-mode .logout-side:hover{
+  background:#3a211f;
+}
+
+
+/* =========================================================
+   DESKTOP
+========================================================= */
+
+@media(min-width:700px){
+
+  .main{
+    padding-left:20px;
+
+    padding-right:20px;
+  }
+
+  .live-grid{
+    grid-template-columns:
+      repeat(3,minmax(0,1fr));
+  }
+
+  .composer{
+    padding-left:20px;
+
+    padding-right:20px;
+  }
+
+}
+
+
+/* =========================================================
+   SMALL PHONES
+========================================================= */
+
+@media(max-width:380px){
+
+  .topbar{
+    gap:6px;
+
+    padding-left:7px;
+
+    padding-right:7px;
+  }
+
+  .app-title{
+    font-size:16px;
+  }
+
+  .app-title span{
+    font-size:15px;
+  }
+
+  .top-mood{
+    padding-left:8px;
+
+    padding-right:8px;
+
+    font-size:11px;
+  }
+
+  .profile-btn{
+    width:38px;
+
+    height:38px;
+
+    flex-basis:38px;
+  }
+
+  .menu-btn{
+    width:38px;
+
+    height:38px;
+
+    flex-basis:38px;
+  }
+
+  .main{
+    padding-left:8px;
+
+    padding-right:8px;
+  }
+
+  .composer{
+    padding-left:6px;
+
+    padding-right:6px;
+  }
+
+  .icon-btn{
+    width:38px;
+
+    height:40px;
+
+    flex-basis:38px;
+  }
+
+  .send-btn{
+    width:42px;
+
+    height:40px;
+
+    flex-basis:42px;
+  }
+
+  .live-grid{
+    grid-template-columns:
+      1fr
+      1fr;
+  }
+
+  .mood-grid{
+    gap:6px;
+  }
+
+  .mood-option{
+    padding:
+      11px
+      5px;
+  }
+
+}
+
+
+/* =========================================================
+   VERY SMALL HEIGHT DEVICES
+========================================================= */
+
+@media(max-height:620px){
+
+  .mood-popover{
+    padding-top:12px;
+
+    padding-bottom:
+      calc(
+        12px +
+        env(safe-area-inset-bottom)
+      );
+  }
+
+  .mood-option{
+    padding:
+      8px
+      5px;
+  }
+
+  .mood-option .big{
+    font-size:24px;
+  }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media(prefers-reduced-motion:reduce){
+
+  *,
+  *::before,
+  *::after{
+    animation-duration:.01ms !important;
+
+    animation-iteration-count:1 !important;
+
+    transition-duration:.01ms !important;
+  }
+
 }
 
 </style>
@@ -2130,6 +2851,7 @@ body.dark-mode .profile-upload{
 
 
 <body>
+
 
 <!-- =======================================================
      APP SCREEN
@@ -2143,6 +2865,7 @@ body.dark-mode .profile-upload{
   ===================================================== -->
 
   <header class="topbar">
+
 
     <button
       id="menuBtn"
@@ -2185,6 +2908,7 @@ body.dark-mode .profile-upload{
 
     </button>
 
+
   </header>
 
 
@@ -2203,6 +2927,7 @@ body.dark-mode .profile-upload{
       id="chatView"
       class="view active"
     >
+
 
       <div
         id="chooseMoodScreen"
@@ -2322,9 +3047,7 @@ body.dark-mode .profile-upload{
         </div>
 
 
-        <div
-          id="conversationsList"
-        >
+        <div id="conversationsList">
 
           <div class="empty-state">
 
@@ -2449,6 +3172,7 @@ body.dark-mode .profile-upload{
 
       <div class="my-profile">
 
+
         <img
           id="myProfileAvatar"
           class="my-profile-avatar"
@@ -2463,6 +3187,7 @@ body.dark-mode .profile-upload{
         >
           📷 Change Photo
         </label>
+
 
         <input
           id="profileImageInput"
@@ -2497,6 +3222,7 @@ body.dark-mode .profile-upload{
 
 
         <div class="profile-details">
+
 
           <div class="detail-box">
 
@@ -2557,6 +3283,7 @@ body.dark-mode .profile-upload{
 
           </div>
 
+
         </div>
 
       </div>
@@ -2615,6 +3342,7 @@ body.dark-mode .profile-upload{
         ➤
       </button>
 
+
     </div>
 
   </div>
@@ -2642,7 +3370,9 @@ body.dark-mode .profile-upload{
   class="drawer"
 >
 
+
   <div class="drawer-top">
+
 
     <img
       id="drawerAvatar"
@@ -2650,6 +3380,7 @@ body.dark-mode .profile-upload{
       src=""
       alt="Profile"
     >
+
 
     <div class="drawer-user">
 
@@ -2678,6 +3409,7 @@ body.dark-mode .profile-upload{
     >
       ✕
     </button>
+
 
   </div>
 
@@ -2800,6 +3532,7 @@ body.dark-mode .profile-upload{
 
   </button>
 
+
 </aside>
 
 
@@ -2821,6 +3554,7 @@ body.dark-mode .profile-upload{
   id="moodPopover"
   class="mood-popover"
 >
+
 
   <div class="mood-title">
     How are you feeling?
@@ -2970,7 +3704,9 @@ body.dark-mode .profile-upload{
   class="profile-popover"
 >
 
+
   <div class="profile-head">
+
 
     <img
       id="popoverProfileAvatar"
@@ -2979,12 +3715,14 @@ body.dark-mode .profile-upload{
       alt="Profile"
     >
 
+
     <div
       id="popoverProfileName"
       class="profile-name"
     >
       User
     </div>
+
 
     <div
       id="popoverProfileHandle"
@@ -2993,10 +3731,12 @@ body.dark-mode .profile-upload{
       @user
     </div>
 
+
   </div>
 
 
   <div class="profile-stats">
+
 
     <div class="profile-stat">
 
@@ -3042,6 +3782,7 @@ body.dark-mode .profile-upload{
 
     </div>
 
+
   </div>
 
 </div>
@@ -3056,7 +3797,9 @@ body.dark-mode .profile-upload{
   class="private-popover"
 >
 
+
   <div class="private-head">
+
 
     <button
       id="privateBackBtn"
@@ -3077,6 +3820,7 @@ body.dark-mode .profile-upload{
 
 
     <div class="private-user">
+
 
       <div
         id="privateName"
@@ -3101,7 +3845,9 @@ body.dark-mode .profile-upload{
         Offline
       </div>
 
+
     </div>
+
 
   </div>
 
@@ -3145,6 +3891,7 @@ body.dark-mode .profile-upload{
 
   <div class="private-composer">
 
+
     <button
       id="privateImageBtn"
       class="icon-btn"
@@ -3181,7 +3928,9 @@ body.dark-mode .profile-upload{
       ➤
     </button>
 
+
   </div>
+
 
 </div>
 
@@ -3210,7 +3959,9 @@ body.dark-mode .profile-upload{
      MOODCHAT HOME JAVASCRIPT
 ======================================================= -->
 
-
 <script src="Home.js?v=1"></script>
+
+
 </body>
+
 </html>
