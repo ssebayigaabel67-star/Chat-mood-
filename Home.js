@@ -105,13 +105,17 @@ const state = {
 
   conversationsUnsubscribe: null,
 
+  allProfilesUnsubscribe: null,
+
   typingPublicRef: null,
 
   typingPrivateRef: null,
 
   typingTimer: null,
 
-  privateTypingTimer: null
+  privateTypingTimer: null,
+
+  changingMood: false
 
 };
 
@@ -309,6 +313,88 @@ function showToast(message) {
 
 
 // ============================================================
+// LAST SEEN
+// ============================================================
+
+function formatLastSeen(timestamp) {
+
+  if (!timestamp) {
+    return "Last seen recently";
+  }
+
+  const time =
+    Number(timestamp);
+
+  if (!time) {
+    return "Last seen recently";
+  }
+
+  const difference =
+    Date.now() - time;
+
+  if (difference < 60000) {
+
+    return "Last seen just now";
+
+  }
+
+  const minutes =
+    Math.floor(
+      difference / 60000
+    );
+
+  if (minutes < 60) {
+
+    return (
+      "Last seen " +
+      minutes +
+      (
+        minutes === 1
+          ? " minute ago"
+          : " minutes ago"
+      )
+    );
+
+  }
+
+  const hours =
+    Math.floor(
+      minutes / 60
+    );
+
+  if (hours < 24) {
+
+    return (
+      "Last seen " +
+      hours +
+      (
+        hours === 1
+          ? " hour ago"
+          : " hours ago"
+      )
+    );
+
+  }
+
+  const days =
+    Math.floor(
+      hours / 24
+    );
+
+  return (
+    "Last seen " +
+    days +
+    (
+      days === 1
+        ? " day ago"
+        : " days ago"
+    )
+  );
+
+}
+
+
+// ============================================================
 // PROFILE
 // ============================================================
 
@@ -328,9 +414,6 @@ async function loadMyProfile() {
     const snap =
       await ref.get();
 
-    // --------------------------------------------------------
-    // PROFILE DOES NOT EXIST
-    // --------------------------------------------------------
 
     if (!snap.exists) {
 
@@ -380,22 +463,14 @@ async function loadMyProfile() {
       );
 
       state.profile = {
-
         ...profile,
-
-        uid:
-          state.user.uid
-
+        uid: state.user.uid
       };
 
       return state.profile;
 
     }
 
-
-    // --------------------------------------------------------
-    // PROFILE EXISTS
-    // --------------------------------------------------------
 
     state.profile = {
 
@@ -407,10 +482,6 @@ async function loadMyProfile() {
     };
 
 
-    // --------------------------------------------------------
-    // MAKE SURE EMAIL IS CORRECT
-    // --------------------------------------------------------
-
     if (
       !state.profile.email &&
       state.user.email
@@ -418,6 +489,18 @@ async function loadMyProfile() {
 
       state.profile.email =
         state.user.email;
+
+    }
+
+
+    if (
+      !state.profile.username
+    ) {
+
+      state.profile.username =
+        state.user.email
+          ? state.user.email.split("@")[0]
+          : "User";
 
     }
 
@@ -439,7 +522,7 @@ async function loadMyProfile() {
 
 
 // ============================================================
-// REAL-TIME PROFILE LISTENER
+// REAL-TIME OWN PROFILE LISTENER
 // ============================================================
 
 let myProfileUnsubscribe = null;
@@ -451,6 +534,7 @@ function startMyProfileListener() {
     return;
   }
 
+
   if (myProfileUnsubscribe) {
 
     myProfileUnsubscribe();
@@ -459,6 +543,7 @@ function startMyProfileListener() {
       null;
 
   }
+
 
   const ref =
     db
@@ -486,20 +571,60 @@ function startMyProfileListener() {
         };
 
 
-        // Keep the COMPLETE profile
-        // synchronized with Firebase.
+        // Preserve values already known locally
+        // if Firebase temporarily doesn't contain them.
 
-        state.profile =
-          firebaseProfile;
-
-
-        // Keep local mood synchronized.
-        state.mood =
-          firebaseProfile.current_mood ||
-          null;
+        const oldProfile =
+          state.profile || {};
 
 
-        // Update our copy inside profiles.
+        state.profile = {
+
+          ...oldProfile,
+
+          ...firebaseProfile,
+
+          uid:
+            state.user.uid
+
+        };
+
+
+        if (
+          !state.profile.username
+        ) {
+
+          state.profile.username =
+            state.user.email
+              ? state.user.email.split("@")[0]
+              : "User";
+
+        }
+
+
+        if (
+          state.profile.email === undefined ||
+          state.profile.email === ""
+        ) {
+
+          state.profile.email =
+            state.user.email || "";
+
+        }
+
+
+        if (
+          firebaseProfile.current_mood !==
+          undefined
+        ) {
+
+          state.mood =
+            firebaseProfile.current_mood ||
+            null;
+
+        }
+
+
         const index =
           state.profiles.findIndex(
             p =>
@@ -510,13 +635,18 @@ function startMyProfileListener() {
 
         if (index >= 0) {
 
-          state.profiles[index] =
-            firebaseProfile;
+          state.profiles[index] = {
+
+            ...state.profiles[index],
+
+            ...state.profile
+
+          };
 
         } else {
 
           state.profiles.push(
-            firebaseProfile
+            state.profile
           );
 
         }
@@ -527,6 +657,8 @@ function startMyProfileListener() {
         updateMoodUI();
 
         updatePresence();
+
+        updatePrivateStatus();
 
         updatePrivateMatch();
 
@@ -550,7 +682,95 @@ function startMyProfileListener() {
 
 
 // ============================================================
-// LOAD ALL REAL PROFILES
+// REAL-TIME ALL PROFILES
+// ============================================================
+
+function startAllProfilesListener() {
+
+  if (
+    state.allProfilesUnsubscribe
+  ) {
+
+    state.allProfilesUnsubscribe();
+
+    state.allProfilesUnsubscribe =
+      null;
+
+  }
+
+
+  state.allProfilesUnsubscribe =
+    db
+      .collection("profiles")
+      .limit(300)
+      .onSnapshot(
+
+        snapshot => {
+
+          state.profiles =
+            snapshot.docs.map(
+              doc => ({
+
+                uid:
+                  doc.id,
+
+                ...doc.data()
+
+              })
+            );
+
+
+          // Make sure our own profile
+          // is included.
+
+          if (state.profile) {
+
+            const exists =
+              state.profiles.some(
+                p =>
+                  p.uid ===
+                  state.profile.uid
+              );
+
+
+            if (!exists) {
+
+              state.profiles.push(
+                state.profile
+              );
+
+            }
+
+          }
+
+
+          renderProfile();
+
+          renderLive();
+
+          renderLeaderboard();
+
+          updatePrivateStatus();
+
+          updatePrivateMatch();
+
+        },
+
+        error => {
+
+          console.error(
+            "ALL PROFILES LISTENER ERROR:",
+            error
+          );
+
+        }
+      );
+
+}
+
+
+// ============================================================
+// LOAD ALL PROFILES
 // ============================================================
 
 async function loadAllProfiles() {
@@ -567,28 +787,27 @@ async function loadAllProfiles() {
     state.profiles =
       snap.docs.map(
         doc => ({
+
           uid:
             doc.id,
 
           ...doc.data()
+
         })
       );
 
 
-    // Make sure our own current profile
-    // is present in the list.
-
     if (state.profile) {
 
-      const existing =
-        state.profiles.find(
+      const exists =
+        state.profiles.some(
           p =>
             p.uid ===
             state.profile.uid
         );
 
 
-      if (!existing) {
+      if (!exists) {
 
         state.profiles.push(
           state.profile
@@ -635,10 +854,6 @@ function renderProfile() {
     avatarFor(p);
 
 
-  // ----------------------------------------------------------
-  // TOP PROFILE
-  // ----------------------------------------------------------
-
   if ($("topProfileAvatar")) {
 
     $("topProfileAvatar").src =
@@ -646,10 +861,6 @@ function renderProfile() {
 
   }
 
-
-  // ----------------------------------------------------------
-  // DRAWER PROFILE
-  // ----------------------------------------------------------
 
   if ($("drawerAvatar")) {
 
@@ -659,10 +870,6 @@ function renderProfile() {
   }
 
 
-  // ----------------------------------------------------------
-  // MY PROFILE
-  // ----------------------------------------------------------
-
   if ($("myProfileAvatar")) {
 
     $("myProfileAvatar").src =
@@ -670,10 +877,6 @@ function renderProfile() {
 
   }
 
-
-  // ----------------------------------------------------------
-  // PROFILE POPOVER
-  // ----------------------------------------------------------
 
   if ($("popoverProfileAvatar")) {
 
@@ -684,7 +887,12 @@ function renderProfile() {
 
 
   const name =
-    p.username || "User";
+    p.username ||
+    (
+      state.user?.email
+        ? state.user.email.split("@")[0]
+        : "User"
+    );
 
 
   if ($("drawerName")) {
@@ -1009,13 +1217,15 @@ async function setMood(moodKey) {
 
 
   if (!MOODS[moodKey]) {
-
     return;
-
   }
 
 
-  // Don't do anything if already selected.
+  if (state.changingMood) {
+    return;
+  }
+
+
   if (
     state.mood === moodKey
   ) {
@@ -1025,6 +1235,10 @@ async function setMood(moodKey) {
     return;
 
   }
+
+
+  state.changingMood =
+    true;
 
 
   const oldMood =
@@ -1037,10 +1251,6 @@ async function setMood(moodKey) {
       "Changing mood..."
     );
 
-
-    // --------------------------------------------------------
-    // SAVE MOOD TO FIREBASE FIRST
-    // --------------------------------------------------------
 
     await db
       .collection("profiles")
@@ -1058,11 +1268,6 @@ async function setMood(moodKey) {
         merge: true
       });
 
-
-    // --------------------------------------------------------
-    // UPDATE LOCAL STATE
-    // ONLY AFTER FIREBASE SUCCESS
-    // --------------------------------------------------------
 
     state.mood =
       moodKey;
@@ -1091,10 +1296,6 @@ async function setMood(moodKey) {
 
     }
 
-
-    // --------------------------------------------------------
-    // MOOD HISTORY
-    // --------------------------------------------------------
 
     try {
 
@@ -1126,10 +1327,6 @@ async function setMood(moodKey) {
     }
 
 
-    // --------------------------------------------------------
-    // UPDATE UI
-    // --------------------------------------------------------
-
     updateMoodUI();
 
 
@@ -1154,38 +1351,14 @@ async function setMood(moodKey) {
     closeMoodPicker();
 
 
-    // --------------------------------------------------------
-    // PRESENCE
-    // --------------------------------------------------------
-
     await updatePresence();
 
 
-    // --------------------------------------------------------
-    // PUBLIC ROOM
-    // --------------------------------------------------------
-
     startPublicMessages();
-
-
-    // --------------------------------------------------------
-    // PUBLIC TYPING LISTENER
-    // IMPORTANT AFTER MOOD CHANGE
-    // --------------------------------------------------------
 
     startPublicTypingListener();
 
-
-    // --------------------------------------------------------
-    // UPDATE PRIVATE MATCH
-    // --------------------------------------------------------
-
     updatePrivateMatch();
-
-
-    // --------------------------------------------------------
-    // REFRESH LIVE / LEADERBOARD
-    // --------------------------------------------------------
 
     renderLive();
 
@@ -1209,7 +1382,6 @@ async function setMood(moodKey) {
     );
 
 
-    // Restore old mood if Firebase failed.
     state.mood =
       oldMood;
 
@@ -1229,9 +1401,15 @@ async function setMood(moodKey) {
       "Could not change your mood."
     );
 
+  } finally {
+
+    state.changingMood =
+      false;
+
   }
 
 }
+
 
 // ============================================================
 // ONLINE PRESENCE
@@ -1240,53 +1418,88 @@ async function setMood(moodKey) {
 let presenceRef = null;
 let presenceListener = null;
 
+
 async function updatePresence() {
 
   if (!state.user) {
-    console.log("PRESENCE: No logged-in user.");
+
+    console.log(
+      "PRESENCE: No logged-in user."
+    );
+
     return;
+
   }
+
 
   try {
 
-    const database = firebase.database();
-
-    presenceRef = database.ref(
-      "presence/" + state.user.uid
-    );
-
     const username =
       state.profile?.username ||
-      state.user.email?.split("@")[0] ||
-      "User";
+      (
+        state.user.email
+          ? state.user.email.split("@")[0]
+          : "User"
+      );
+
 
     const mood =
       state.mood ||
       state.profile?.current_mood ||
       null;
 
+
     const gender =
       state.profile?.gender ||
       "";
+
 
     const photoURL =
       state.profile?.photoURL ||
       "";
 
-    const presenceData = {
-      uid: state.user.uid,
-      username: username,
-      mood: mood,
-      gender: gender,
-      photoURL: photoURL,
+
+    const data = {
+
+      uid:
+        state.user.uid,
+
+      username:
+        username,
+
+      mood:
+        mood,
+
+      gender:
+        gender,
+
+      photoURL:
+        photoURL,
+
+      online:
+        true,
+
       lastSeen:
-        firebase.database.ServerValue.TIMESTAMP
+        firebase.database.ServerValue
+          .TIMESTAMP
+
     };
 
-    await presenceRef.set(presenceData);
+
+    presenceRef =
+      rtdb.ref(
+        "presence/" +
+        state.user.uid
+      );
+
+
+    await presenceRef.set(
+      data
+    );
+
 
     console.log(
-      "PRESENCE: Online status saved successfully."
+      "PRESENCE: User is online."
     );
 
   } catch (error) {
@@ -1301,72 +1514,208 @@ async function updatePresence() {
       error.code
     );
 
-    showToast(
-      "Online status could not be updated."
-    );
   }
+
 }
 
+
+// ============================================================
+// START PRESENCE
+// ============================================================
 
 async function startPresence() {
 
   if (!state.user) {
+
     console.log(
       "PRESENCE: Cannot start without login."
     );
+
     return;
+
   }
+
 
   try {
 
-    const database = firebase.database();
+    const database =
+      firebase.database();
 
-    presenceRef = database.ref(
-      "presence/" + state.user.uid
-    );
 
-    // Remove the user automatically when
-    // Firebase detects that the connection is lost.
-    await presenceRef.onDisconnect().remove();
+    presenceRef =
+      database.ref(
+        "presence/" +
+        state.user.uid
+      );
 
-    // Mark this user online immediately.
+
+    // --------------------------------------------------------
+    // IMPORTANT:
+    // Do NOT remove the user when offline.
+    // Keep the record and mark them offline.
+    // --------------------------------------------------------
+
+    await presenceRef
+      .onDisconnect()
+      .set({
+
+        uid:
+          state.user.uid,
+
+        username:
+          state.profile?.username ||
+          "User",
+
+        mood:
+          state.mood ||
+          null,
+
+        gender:
+          state.profile?.gender ||
+          "",
+
+        photoURL:
+          state.profile?.photoURL ||
+          "",
+
+        online:
+          false,
+
+        lastSeen:
+          firebase.database.ServerValue
+            .TIMESTAMP
+
+      });
+
+
     await updatePresence();
+
 
     console.log(
       "PRESENCE: Started successfully."
     );
 
-    // Watch all online users.
+
+    // --------------------------------------------------------
+    // WATCH ALL PRESENCE
+    // --------------------------------------------------------
+
     const allPresenceRef =
-      database.ref("presence");
+      database.ref(
+        "presence"
+      );
+
 
     if (presenceListener) {
+
       allPresenceRef.off(
         "value",
         presenceListener
       );
+
     }
 
-    presenceListener = (snapshot) => {
 
-      const presenceData =
-        snapshot.val() || {};
+    presenceListener =
+      snapshot => {
 
-      state.onlineUsers = presenceData;
+        const presenceData =
+          snapshot.val() || {};
 
-      console.log(
-        "PRESENCE USERS:",
-        presenceData
-      );
 
-      updateOnlineCount();
-      renderLive();
+        state.onlineUsers =
+          presenceData;
 
-    };
+
+        console.log(
+          "PRESENCE USERS:",
+          presenceData
+        );
+
+
+        updateOnlineCount();
+
+        renderLive();
+
+        updatePrivateStatus();
+
+      };
+
 
     allPresenceRef.on(
       "value",
       presenceListener
+    );
+
+
+    // --------------------------------------------------------
+    // FIREBASE CONNECTION MONITOR
+    // --------------------------------------------------------
+
+    const connectionRef =
+      database.ref(
+        ".info/connected"
+      );
+
+
+    connectionRef.on(
+      "value",
+      async snapshot => {
+
+        if (
+          snapshot.val() === true
+        ) {
+
+          try {
+
+            await presenceRef
+              .onDisconnect()
+              .set({
+
+                uid:
+                  state.user.uid,
+
+                username:
+                  state.profile?.username ||
+                  "User",
+
+                mood:
+                  state.mood ||
+                  null,
+
+                gender:
+                  state.profile?.gender ||
+                  "",
+
+                photoURL:
+                  state.profile?.photoURL ||
+                  "",
+
+                online:
+                  false,
+
+                lastSeen:
+                  firebase.database
+                    .ServerValue
+                    .TIMESTAMP
+
+              });
+
+
+            await updatePresence();
+
+          } catch (error) {
+
+            console.error(
+              "RECONNECT PRESENCE ERROR:",
+              error
+            );
+
+          }
+
+        }
+
+      }
     );
 
   } catch (error) {
@@ -1384,8 +1733,12 @@ async function startPresence() {
     showToast(
       "Could not connect to online users."
     );
+
   }
+
 }
+
+
 // ============================================================
 // ONLINE COUNT
 // ============================================================
@@ -1399,8 +1752,8 @@ function updateOnlineCount() {
       .filter(
         person =>
           person &&
-          person.mood ===
-          state.mood
+          person.online === true &&
+          person.mood === state.mood
       )
       .length;
 
@@ -1409,11 +1762,7 @@ function updateOnlineCount() {
 
     $("onlineCount").textContent =
       count +
-      (
-        count === 1
-          ? " online"
-          : " online"
-      );
+      " online";
 
   }
 
@@ -2169,38 +2518,6 @@ async function addPoints(
     });
 
 
-    if (state.profile) {
-
-      state.profile.points =
-        Number(
-          state.profile.points || 0
-        ) + amount;
-
-    }
-
-
-    const me =
-      state.profiles.find(
-        user =>
-          user.uid ===
-          state.user.uid
-      );
-
-
-    if (me) {
-
-      me.points =
-        Number(
-          me.points || 0
-        ) + amount;
-
-    }
-
-
-    renderProfile();
-
-    renderLeaderboard();
-
   } catch (error) {
 
     console.error(
@@ -2257,10 +2574,6 @@ async function openPrivateChat(
     );
 
 
-  // ----------------------------------------------------------
-  // IF PROFILE IS NOT IN MEMORY, GET IT FROM FIREBASE
-  // ----------------------------------------------------------
-
   if (!profile) {
 
     try {
@@ -2315,10 +2628,6 @@ async function openPrivateChat(
 
   }
 
-
-  // ----------------------------------------------------------
-  // IMPORTANT: GET FRESH PROFILE DATA
-  // ----------------------------------------------------------
 
   try {
 
@@ -2410,8 +2719,6 @@ async function openPrivateChat(
   );
 
 
-  // IMPORTANT:
-  // Start private typing listener
   startPrivateTypingListener();
 
 
@@ -2474,10 +2781,17 @@ function updatePrivateStatus() {
   }
 
 
-  const online =
-    !!state.onlineUsers?.[
+  const presence =
+    state.onlineUsers?.[
       person.uid
     ];
+
+
+  const online =
+    !!(
+      presence &&
+      presence.online === true
+    );
 
 
   if ($("privateStatus")) {
@@ -2485,7 +2799,7 @@ function updatePrivateStatus() {
     $("privateStatus").textContent =
       online
         ? "🟢 Online"
-        : "Offline";
+        : "⚪ Offline";
 
   }
 
@@ -3217,6 +3531,8 @@ function renderConversations(
 
 // ============================================================
 // LIVE PEOPLE
+// IMPORTANT:
+// USERS NOW REMAIN VISIBLE EVEN WHEN OFFLINE.
 // ============================================================
 
 function renderLive() {
@@ -3231,35 +3547,39 @@ function renderLive() {
 
 
   const people =
-    Object.entries(
-      state.onlineUsers || {}
-    )
+    state.profiles
       .filter(
-        ([uid, person]) =>
-          uid !==
-            state.user?.uid &&
-          person
+        profile =>
+          profile &&
+          profile.uid !==
+            state.user?.uid
       )
       .map(
-        ([uid, person]) => ({
+        profile => {
 
-          uid,
+          const presence =
+            state.onlineUsers?.[
+              profile.uid
+            ] || {};
 
-          ...person
 
-        })
-      )
-      .filter(
-        person => {
+          return {
 
-          if (!state.mood) {
-            return true;
-          }
+            ...profile,
 
-          return (
-            person.mood ===
-            state.mood
-          );
+            online:
+              presence.online === true,
+
+            presenceMood:
+              presence.mood,
+
+            presencePhoto:
+              presence.photoURL,
+
+            lastSeen:
+              presence.lastSeen || 0
+
+          };
 
         }
       );
@@ -3272,15 +3592,15 @@ function renderLive() {
       <div class="empty-state">
 
         <span class="emoji">
-          🟢
+          👥
         </span>
 
         <strong>
-          Nobody else is online
+          No other users yet
         </strong>
 
         <span>
-          Online people will appear here.
+          New users will appear here.
         </span>
 
       </div>
@@ -3292,6 +3612,44 @@ function renderLive() {
   }
 
 
+  // ----------------------------------------------------------
+  // ONLINE USERS FIRST
+  // OFFLINE USERS REMAIN BELOW
+  // ----------------------------------------------------------
+
+  people.sort(
+    (a, b) => {
+
+      if (
+        a.online &&
+        !b.online
+      ) {
+
+        return -1;
+
+      }
+
+      if (
+        !a.online &&
+        b.online
+      ) {
+
+        return 1;
+
+      }
+
+      return String(
+        a.username || "User"
+      ).localeCompare(
+        String(
+          b.username || "User"
+        )
+      );
+
+    }
+  );
+
+
   grid.innerHTML =
     people
       .map(
@@ -3299,35 +3657,45 @@ function renderLive() {
 
           const mood =
             getMood(
-              person.mood
-            );
-
-
-          const profile =
-            state.profiles.find(
-              user =>
-                user.uid ===
-                person.uid
+              person.online
+                ? (
+                    person.presenceMood ||
+                    person.current_mood
+                  )
+                : person.current_mood
             );
 
 
           const name =
-            profile?.username ||
             person.username ||
             "User";
 
 
           const avatar =
             avatarFor(
-              profile || {
-                username:
-                  name,
+              {
+                ...person,
 
                 photoURL:
                   person.photoURL ||
+                  person.presencePhoto ||
                   ""
               }
             );
+
+
+          const status =
+            person.online
+              ? "🟢 Online"
+              : "⚪ Offline";
+
+
+          const lastSeen =
+            person.online
+              ? "Active now"
+              : formatLastSeen(
+                  person.lastSeen
+                );
 
 
           return `
@@ -3351,15 +3719,26 @@ function renderLive() {
                   )}"
                 >
 
-                <span class="online-dot"></span>
+                <span
+                  class="online-dot"
+                  style="
+                    background:${
+                      person.online
+                        ? "#42c84a"
+                        : "#aaa"
+                    };
+                  "
+                ></span>
 
               </div>
+
 
               <div class="live-name">
                 ${escapeHTML(
                   name
                 )}
               </div>
+
 
               <div class="live-mood">
 
@@ -3368,6 +3747,60 @@ function renderLive() {
                 ${mood?.name || "No mood"}
 
               </div>
+
+
+              <div
+                class="live-status"
+                style="
+                  font-size:13px;
+                  margin-top:5px;
+                  opacity:.8;
+                "
+              >
+
+                ${status}
+
+              </div>
+
+
+              <div
+                class="live-last-seen"
+                style="
+                  font-size:12px;
+                  margin-top:3px;
+                  opacity:.65;
+                "
+              >
+
+                ${escapeHTML(
+                  lastSeen
+                )}
+
+              </div>
+
+
+              <button
+                type="button"
+                class="live-chat-btn"
+                data-chat-user="${escapeHTML(
+                  person.uid
+                )}"
+                style="
+                  margin-top:10px;
+                  width:100%;
+                  border:0;
+                  border-radius:12px;
+                  padding:10px 12px;
+                  font-weight:700;
+                  cursor:pointer;
+                  background:#ff7a18;
+                  color:#fff;
+                "
+              >
+
+                💬 Chat
+
+              </button>
 
             </div>
 
@@ -3378,6 +3811,38 @@ function renderLive() {
       .join("");
 
 
+  // ----------------------------------------------------------
+  // CHAT BUTTONS
+  // ----------------------------------------------------------
+
+  grid
+    .querySelectorAll(
+      "[data-chat-user]"
+    )
+    .forEach(
+      button => {
+
+        button.addEventListener(
+          "click",
+          event => {
+
+            event.stopPropagation();
+
+            openPrivateChat(
+              button.dataset.chatUser
+            );
+
+          }
+        );
+
+      }
+    );
+
+
+  // ----------------------------------------------------------
+  // CLICKING THE CARD ALSO OPENS CHAT
+  // ----------------------------------------------------------
+
   grid
     .querySelectorAll(
       "[data-live-user]"
@@ -3387,7 +3852,18 @@ function renderLive() {
 
         card.addEventListener(
           "click",
-          () => {
+          event => {
+
+            if (
+              event.target.closest(
+                "[data-chat-user]"
+              )
+            ) {
+
+              return;
+
+            }
+
 
             openPrivateChat(
               card.dataset.liveUser
@@ -3568,10 +4044,6 @@ async function changeProfilePhoto(
     );
 
 
-    // --------------------------------------------------------
-    // SMALLER SIZE FOR FIRESTORE
-    // --------------------------------------------------------
-
     const base64 =
       await compressImage(
         file,
@@ -3591,10 +4063,6 @@ async function changeProfilePhoto(
     }
 
 
-    // --------------------------------------------------------
-    // SAVE TO FIRESTORE
-    // --------------------------------------------------------
-
     await db
       .collection("profiles")
       .doc(state.user.uid)
@@ -3611,10 +4079,6 @@ async function changeProfilePhoto(
         merge: true
       });
 
-
-    // --------------------------------------------------------
-    // UPDATE LOCAL PROFILE
-    // --------------------------------------------------------
 
     if (!state.profile) {
 
@@ -3652,10 +4116,6 @@ async function changeProfilePhoto(
     }
 
 
-    // --------------------------------------------------------
-    // UPDATE PROFILE LIST
-    // --------------------------------------------------------
-
     const index =
       state.profiles.findIndex(
         user =>
@@ -3666,8 +4126,14 @@ async function changeProfilePhoto(
 
     if (index >= 0) {
 
-      state.profiles[index].photoURL =
-        base64;
+      state.profiles[index] = {
+
+        ...state.profiles[index],
+
+        photoURL:
+          base64
+
+      };
 
     } else {
 
@@ -3680,16 +4146,8 @@ async function changeProfilePhoto(
     }
 
 
-    // --------------------------------------------------------
-    // UPDATE PRESENCE PHOTO
-    // --------------------------------------------------------
-
     await updatePresence();
 
-
-    // --------------------------------------------------------
-    // REFRESH UI
-    // --------------------------------------------------------
 
     renderProfile();
 
@@ -3708,6 +4166,12 @@ async function changeProfilePhoto(
     console.error(
       "PROFILE PHOTO ERROR:",
       error
+    );
+
+
+    console.error(
+      "PROFILE PHOTO ERROR CODE:",
+      error.code
     );
 
 
@@ -3852,7 +4316,6 @@ function setupPublicTyping() {
   }
 
 
-  // Prevent duplicate listeners.
   if (
     input.dataset.typingReady ===
     "true"
@@ -4424,12 +4887,25 @@ async function logout() {
 
       try {
 
+        // Mark offline instead of deleting
+        // the presence record.
+
         await rtdb
           .ref(
             "presence/" +
             state.user.uid
           )
-          .remove();
+          .update({
+
+            online:
+              false,
+
+            lastSeen:
+              firebase.database
+                .ServerValue
+                .TIMESTAMP
+
+          });
 
       } catch (presenceError) {
 
@@ -4448,6 +4924,18 @@ async function logout() {
       myProfileUnsubscribe();
 
       myProfileUnsubscribe =
+        null;
+
+    }
+
+
+    if (
+      state.allProfilesUnsubscribe
+    ) {
+
+      state.allProfilesUnsubscribe();
+
+      state.allProfilesUnsubscribe =
         null;
 
     }
@@ -4540,14 +5028,14 @@ auth.onAuthStateChanged(
 
 
       // ------------------------------------------------------
-      // LOAD PROFILE FIRST
+      // LOAD OUR PROFILE
       // ------------------------------------------------------
 
       await loadMyProfile();
 
 
       // ------------------------------------------------------
-      // GET CURRENT MOOD FROM FIREBASE
+      // GET CURRENT MOOD
       // ------------------------------------------------------
 
       state.mood =
@@ -4556,21 +5044,28 @@ auth.onAuthStateChanged(
 
 
       // ------------------------------------------------------
-      // LOAD ALL USERS
+      // LOAD PROFILES ONCE
       // ------------------------------------------------------
 
       await loadAllProfiles();
 
 
       // ------------------------------------------------------
-      // RENDER PROFILE
+      // START REAL-TIME PROFILES
+      // ------------------------------------------------------
+
+      startAllProfilesListener();
+
+
+      // ------------------------------------------------------
+      // RENDER
       // ------------------------------------------------------
 
       renderProfile();
 
 
       // ------------------------------------------------------
-      // REAL-TIME OWN PROFILE LISTENER
+      // OWN PROFILE LISTENER
       // ------------------------------------------------------
 
       startMyProfileListener();
@@ -5029,12 +5524,45 @@ setupDarkMode();
 
 
 // ============================================================
-// CLEANUP
+// BEFORE UNLOAD
 // ============================================================
 
 window.addEventListener(
   "beforeunload",
   () => {
+
+    if (state.user) {
+
+      try {
+
+        rtdb
+          .ref(
+            "presence/" +
+            state.user.uid
+          )
+          .update({
+
+            online:
+              false,
+
+            lastSeen:
+              firebase.database
+                .ServerValue
+                .TIMESTAMP
+
+          });
+
+      } catch (error) {
+
+        console.error(
+          "BEFOREUNLOAD PRESENCE ERROR:",
+          error
+        );
+
+      }
+
+    }
+
 
     if (
       state.typingPublicRef
@@ -5077,6 +5605,15 @@ window.addEventListener(
     ) {
 
       state.conversationsUnsubscribe();
+
+    }
+
+
+    if (
+      state.allProfilesUnsubscribe
+    ) {
+
+      state.allProfilesUnsubscribe();
 
     }
 
