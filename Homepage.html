@@ -17,7 +17,6 @@
 
 <title>MOODCHAT — Chat By Mood</title>
 
-
 <style>
 
 /* =========================================================
@@ -32,7 +31,6 @@ html,
 body{
   margin:0;
   padding:0;
-
   width:100%;
   min-height:100%;
 
@@ -94,13 +92,59 @@ body{
     color .25s ease;
 }
 
-
-/* =========================================================
-   IMPORTANT HIDDEN CLASS
-========================================================= */
-
 .hidden{
   display:none !important;
+}
+
+
+/* =========================================================
+   SVG ICONS
+========================================================= */
+
+.ui-icon{
+  width:20px;
+  height:20px;
+
+  display:block;
+
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+
+  flex:0 0 auto;
+}
+
+.ui-icon.fill{
+  fill:currentColor;
+  stroke:none;
+}
+
+.menu-icon{
+  width:21px;
+  height:21px;
+}
+
+.nav-icon{
+  width:22px;
+  height:22px;
+
+  display:grid;
+  place-items:center;
+
+  flex:0 0 27px;
+}
+
+.nav-icon svg{
+  width:20px;
+  height:20px;
+
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
 }
 
 
@@ -132,9 +176,7 @@ body{
 
   gap:10px;
 
-  padding:
-    8px
-    12px;
+  padding:8px 12px;
 
   background:rgba(255,255,255,.94);
 
@@ -148,13 +190,7 @@ body{
 
   backdrop-filter:blur(14px);
   -webkit-backdrop-filter:blur(14px);
-
-  transition:
-    background .25s ease,
-    border-color .25s ease,
-    box-shadow .25s ease;
 }
-
 
 .menu-btn{
   width:42px;
@@ -169,26 +205,23 @@ body{
 
   color:var(--mood-accent-dark);
 
-  font-size:21px;
-
   cursor:pointer;
 
   display:grid;
   place-items:center;
-
-  transition:
-    transform .15s ease,
-    background .2s ease;
 }
 
 .menu-btn:active{
   transform:scale(.94);
 }
 
-
 .app-title{
   min-width:0;
   flex:1;
+
+  display:flex;
+  align-items:center;
+  gap:6px;
 
   font-size:19px;
   font-weight:1000;
@@ -200,19 +233,25 @@ body{
   color:var(--text);
 }
 
-.app-title span{
-  font-size:18px;
-}
+.app-title-icon{
+  width:20px;
+  height:20px;
 
+  flex:0 0 20px;
+
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
 
 .top-mood{
   border:1px solid var(--mood-border);
 
   min-height:40px;
 
-  padding:
-    8px
-    12px;
+  padding:8px 12px;
 
   border-radius:13px;
 
@@ -229,16 +268,11 @@ body{
   box-shadow:
     0 3px 10px
     var(--mood-shadow);
-
-  transition:
-    transform .15s ease,
-    background .2s ease;
 }
 
 .top-mood:active{
   transform:scale(.95);
 }
-
 
 .profile-btn{
   width:42px;
@@ -263,10 +297,6 @@ body{
   box-shadow:
     0 3px 12px
     rgba(0,0,0,.14);
-
-  transition:
-    border-color .2s ease,
-    transform .15s ease;
 }
 
 .profile-btn:active{
@@ -371,7 +401,6 @@ body{
 .room-title{
   font-size:19px;
   font-weight:1000;
-
   color:var(--text);
 }
 
@@ -386,9 +415,7 @@ body{
 .online-count{
   flex:0 0 auto;
 
-  padding:
-    7px
-    10px;
+  padding:7px 10px;
 
   border-radius:12px;
 
@@ -409,7 +436,6 @@ body{
 
 .feed{
   display:flex;
-
   flex-direction:column;
 
   gap:11px;
@@ -438,11 +464,26 @@ body{
 }
 
 .empty-state .emoji{
-  display:block;
+  display:grid;
+  place-items:center;
 
-  font-size:40px;
+  width:46px;
+  height:46px;
 
-  margin-bottom:8px;
+  margin:0 auto 10px;
+
+  color:var(--mood-accent);
+}
+
+.empty-state .emoji svg{
+  width:40px;
+  height:40px;
+
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
 }
 
 .empty-state strong{
@@ -526,12 +567,12 @@ body{
   align-items:center;
   justify-content:center;
 
-  width:19px;
-  height:19px;
+  width:21px;
+  height:21px;
 
   border-radius:50%;
 
-  font-size:11px;
+  overflow:hidden;
 
   background:var(--mood-soft);
 
@@ -540,10 +581,15 @@ body{
     var(--mood-border);
 }
 
+.mood-badge img{
+  width:100%;
+  height:100%;
+
+  object-fit:cover;
+}
+
 .message-bubble{
-  padding:
-    10px
-    13px;
+  padding:10px 13px;
 
   border-radius:17px;
 
@@ -601,7 +647,6 @@ body{
   display:block;
 
   max-width:100%;
-
   width:auto;
 
   max-height:280px;
@@ -629,9 +674,7 @@ body{
 .reply-box{
   margin-bottom:5px;
 
-  padding:
-    7px
-    9px;
+  padding:7px 9px;
 
   border-left:
     3px solid
@@ -670,8 +713,7 @@ body{
 .typing-indicator{
   min-height:22px;
 
-  padding:
-    4px;
+  padding:4px;
 
   color:var(--muted);
 
@@ -798,14 +840,6 @@ body{
   font-family:inherit;
 
   font-size:14px;
-
-  box-shadow:
-    inset 0 1px 2px
-    rgba(0,0,0,.03);
-
-  transition:
-    border-color .2s ease,
-    box-shadow .2s ease;
 }
 
 .composer-input:focus{
@@ -836,16 +870,10 @@ body{
 
   color:var(--mood-accent-dark);
 
-  font-size:18px;
-
   cursor:pointer;
 
   display:grid;
   place-items:center;
-
-  transition:
-    transform .15s ease,
-    background .2s ease;
 }
 
 .icon-btn:active{
@@ -868,8 +896,6 @@ body{
 
   color:#fff;
 
-  font-size:18px;
-
   cursor:pointer;
 
   display:grid;
@@ -878,18 +904,10 @@ body{
   box-shadow:
     0 4px 12px
     var(--mood-shadow);
-
-  transition:
-    transform .15s ease,
-    filter .2s ease;
 }
 
 .send-btn:active{
   transform:scale(.94);
-}
-
-.send-btn:hover{
-  filter:brightness(.96);
 }
 
 .hidden-input{
@@ -898,7 +916,7 @@ body{
 
 
 /* =========================================================
-   DRAWER BACKDROP
+   DRAWER
 ========================================================= */
 
 .drawer-bg{
@@ -922,11 +940,6 @@ body{
 
   pointer-events:auto;
 }
-
-
-/* =========================================================
-   DRAWER
-========================================================= */
 
 .drawer{
   position:fixed;
@@ -998,10 +1011,6 @@ body{
   border:
     3px solid
     var(--mood-soft);
-
-  box-shadow:
-    0 4px 13px
-    rgba(0,0,0,.10);
 }
 
 .drawer-user{
@@ -1050,7 +1059,8 @@ body{
 
   cursor:pointer;
 
-  font-size:17px;
+  display:grid;
+  place-items:center;
 }
 
 .drawer-section-title{
@@ -1101,11 +1111,6 @@ body{
   font-weight:900;
 
   cursor:pointer;
-
-  transition:
-    background .2s ease,
-    color .2s ease,
-    transform .15s ease;
 }
 
 .nav-btn:hover{
@@ -1126,14 +1131,6 @@ body{
   box-shadow:
     0 5px 15px
     var(--mood-shadow);
-}
-
-.nav-icon{
-  width:27px;
-
-  text-align:center;
-
-  font-size:17px;
 }
 
 .nav-badge{
@@ -1240,7 +1237,7 @@ body{
   background:#fffaf6;
 
   padding:
-    13px
+    12px
     7px;
 
   cursor:pointer;
@@ -1271,11 +1268,30 @@ body{
 }
 
 .mood-option .big{
+  display:flex;
+
+  width:72px;
+  height:72px;
+
+  margin:0 auto 7px;
+
+  align-items:center;
+  justify-content:center;
+}
+
+.mood-option .big img{
+  width:100%;
+  height:100%;
+
+  object-fit:contain;
+
   display:block;
 
-  font-size:28px;
-
-  margin-bottom:4px;
+  filter:
+    drop-shadow(
+      0 5px 10px
+      rgba(0,0,0,.12)
+    );
 }
 
 .mood-option strong{
@@ -1525,7 +1541,8 @@ body{
 
   cursor:pointer;
 
-  font-size:18px;
+  display:grid;
+  place-items:center;
 }
 
 .private-avatar{
@@ -1654,6 +1671,23 @@ body{
   border-bottom:
     1px solid
     var(--mood-border);
+
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.heading-icon{
+  width:21px;
+  height:21px;
+
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+
+  color:var(--mood-accent);
 }
 
 .conversation{
@@ -1682,9 +1716,6 @@ body{
   text-align:left;
 
   cursor:pointer;
-
-  transition:
-    background .2s ease;
 }
 
 .conversation:last-child{
@@ -1800,10 +1831,6 @@ body{
   box-shadow:
     0 6px 20px
     var(--mood-shadow);
-
-  transition:
-    transform .15s ease,
-    border-color .2s ease;
 }
 
 .live-card:active{
@@ -1999,14 +2026,13 @@ body{
   border:
     4px solid
     var(--mood-soft);
-
-  box-shadow:
-    0 5px 18px
-    var(--mood-shadow);
 }
 
 .profile-upload{
-  display:inline-block;
+  display:inline-flex;
+
+  align-items:center;
+  gap:6px;
 
   margin-top:9px;
 
@@ -2029,6 +2055,17 @@ body{
   font-weight:900;
 
   cursor:pointer;
+}
+
+.profile-upload svg{
+  width:15px;
+  height:15px;
+
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
 }
 
 .my-profile-name{
@@ -2054,7 +2091,7 @@ body{
 
   align-items:center;
 
-  gap:5px;
+  gap:6px;
 
   margin-top:8px;
 
@@ -2075,6 +2112,13 @@ body{
   font-size:11px;
 
   font-weight:900;
+}
+
+.my-profile-mood img{
+  width:24px;
+  height:24px;
+
+  object-fit:contain;
 }
 
 .profile-details{
@@ -2191,10 +2235,6 @@ body{
    MOOD THEMES
 ========================================================= */
 
-/* -------------------------
-   FLIRTY
-------------------------- */
-
 body.mood-flirty{
   --mood-accent:#e83e75;
   --mood-accent-dark:#bd2457;
@@ -2205,11 +2245,6 @@ body.mood-flirty{
   --mood-shadow:rgba(190,50,95,.15);
   --mood-glow:rgba(232,62,117,.30);
 }
-
-
-/* -------------------------
-   SAD
-------------------------- */
 
 body.mood-sad{
   --mood-accent:#4f78d8;
@@ -2222,11 +2257,6 @@ body.mood-sad{
   --mood-glow:rgba(79,120,216,.28);
 }
 
-
-/* -------------------------
-   VEXED
-------------------------- */
-
 body.mood-vexed{
   --mood-accent:#e64b45;
   --mood-accent-dark:#be302b;
@@ -2237,11 +2267,6 @@ body.mood-vexed{
   --mood-shadow:rgba(190,48,43,.15);
   --mood-glow:rgba(230,75,69,.28);
 }
-
-
-/* -------------------------
-   HAPPY
-------------------------- */
 
 body.mood-happy{
   --mood-accent:#f07b18;
@@ -2254,11 +2279,6 @@ body.mood-happy{
   --mood-glow:rgba(240,123,24,.30);
 }
 
-
-/* -------------------------
-   BORED
-------------------------- */
-
 body.mood-bored{
   --mood-accent:#7658b8;
   --mood-accent-dark:#5a4197;
@@ -2270,11 +2290,6 @@ body.mood-bored{
   --mood-glow:rgba(118,88,184,.25);
 }
 
-
-/* -------------------------
-   HEARTBROKEN
-------------------------- */
-
 body.mood-heartbroken{
   --mood-accent:#a94370;
   --mood-accent-dark:#823153;
@@ -2285,12 +2300,6 @@ body.mood-heartbroken{
   --mood-shadow:rgba(130,48,83,.15);
   --mood-glow:rgba(169,67,112,.28);
 }
-
-
-/* =========================================================
-   STRONG MOOD VISUAL EFFECTS
-   STATIC — NO RAINBOW ANIMATION
-========================================================= */
 
 body[class*="mood-"]{
   background:
@@ -2455,7 +2464,26 @@ body[class*="mood-"] .mood-badge{
 }
 
 .choose-mood-card .emoji{
-  font-size:50px;
+  width:58px;
+  height:58px;
+
+  margin:0 auto;
+
+  display:grid;
+  place-items:center;
+
+  color:var(--mood-accent);
+}
+
+.choose-mood-card .emoji svg{
+  width:50px;
+  height:50px;
+
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.7;
+  stroke-linecap:round;
+  stroke-linejoin:round;
 }
 
 .choose-mood-card h2{
@@ -2551,8 +2579,7 @@ body.dark-mode .choose-mood-card,
 body.dark-mode .mood-popover{
   background:#211914;
 
-  border-color:
-    #49362b;
+  border-color:#49362b;
 }
 
 body.dark-mode .menu-btn,
@@ -2687,7 +2714,6 @@ body.dark-mode .logout-side:hover{
 
   .main{
     padding-left:20px;
-
     padding-right:20px;
   }
 
@@ -2698,7 +2724,6 @@ body.dark-mode .logout-side:hover{
 
   .composer{
     padding-left:20px;
-
     padding-right:20px;
   }
 
@@ -2715,7 +2740,6 @@ body.dark-mode .logout-side:hover{
     gap:6px;
 
     padding-left:7px;
-
     padding-right:7px;
   }
 
@@ -2723,13 +2747,8 @@ body.dark-mode .logout-side:hover{
     font-size:16px;
   }
 
-  .app-title span{
-    font-size:15px;
-  }
-
   .top-mood{
     padding-left:8px;
-
     padding-right:8px;
 
     font-size:11px;
@@ -2737,7 +2756,6 @@ body.dark-mode .logout-side:hover{
 
   .profile-btn{
     width:38px;
-
     height:38px;
 
     flex-basis:38px;
@@ -2745,7 +2763,6 @@ body.dark-mode .logout-side:hover{
 
   .menu-btn{
     width:38px;
-
     height:38px;
 
     flex-basis:38px;
@@ -2753,19 +2770,16 @@ body.dark-mode .logout-side:hover{
 
   .main{
     padding-left:8px;
-
     padding-right:8px;
   }
 
   .composer{
     padding-left:6px;
-
     padding-right:6px;
   }
 
   .icon-btn{
     width:38px;
-
     height:40px;
 
     flex-basis:38px;
@@ -2773,7 +2787,6 @@ body.dark-mode .logout-side:hover{
 
   .send-btn{
     width:42px;
-
     height:40px;
 
     flex-basis:42px;
@@ -2791,15 +2804,22 @@ body.dark-mode .logout-side:hover{
 
   .mood-option{
     padding:
-      11px
+      10px
       5px;
+
+    min-height:118px;
+  }
+
+  .mood-option .big{
+    width:62px;
+    height:62px;
   }
 
 }
 
 
 /* =========================================================
-   VERY SMALL HEIGHT DEVICES
+   VERY SMALL HEIGHT
 ========================================================= */
 
 @media(max-height:620px){
@@ -2821,7 +2841,8 @@ body.dark-mode .logout-side:hover{
   }
 
   .mood-option .big{
-    font-size:24px;
+    width:55px;
+    height:55px;
   }
 
 }
@@ -2854,499 +2875,666 @@ body.dark-mode .logout-side:hover{
 
 
 <!-- =======================================================
+     SVG ICON DEFINITIONS
+======================================================= -->
+
+<svg
+  width="0"
+  height="0"
+  style="position:absolute"
+  aria-hidden="true"
+>
+
+  <symbol id="icon-menu" viewBox="0 0 24 24">
+    <path d="M4 7h16"></path>
+    <path d="M4 12h16"></path>
+    <path d="M4 17h16"></path>
+  </symbol>
+
+  <symbol id="icon-chat" viewBox="0 0 24 24">
+    <path d="M20 11.5a7.5 7.5 0 0 1-7.5 7.5H8l-4 2v-4.2A7.5 7.5 0 1 1 20 11.5Z"></path>
+    <path d="M8 11h.01"></path>
+    <path d="M12 11h.01"></path>
+    <path d="M16 11h.01"></path>
+  </symbol>
+
+  <symbol id="icon-message" viewBox="0 0 24 24">
+    <path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v8a2.5 2.5 0 0 1-2.5 2.5H11l-4.5 4v-4H6.5A2.5 2.5 0 0 1 4 13.5Z"></path>
+  </symbol>
+
+  <symbol id="icon-camera" viewBox="0 0 24 24">
+    <path d="M4 7.5h3l1.5-2h7l1.5 2h3A2 2 0 0 1 22 9.5v9A2 2 0 0 1 20 20.5H4a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2Z"></path>
+    <circle cx="12" cy="14" r="3.5"></circle>
+  </symbol>
+
+  <symbol id="icon-send" viewBox="0 0 24 24">
+    <path d="M21 3 10 14"></path>
+    <path d="m21 3-7 18-4-7-7-4Z"></path>
+  </symbol>
+
+  <symbol id="icon-users" viewBox="0 0 24 24">
+    <circle cx="9" cy="8" r="3"></circle>
+    <path d="M3.5 20a5.5 5.5 0 0 1 11 0"></path>
+    <path d="M16 5.5a3 3 0 0 1 0 5.8"></path>
+    <path d="M17 14.5a5 5 0 0 1 4 5.5"></path>
+  </symbol>
+
+  <symbol id="icon-trophy" viewBox="0 0 24 24">
+    <path d="M8 4h8v5a4 4 0 0 1-8 0Z"></path>
+    <path d="M8 6H4v2a4 4 0 0 0 4 4"></path>
+    <path d="M16 6h4v2a4 4 0 0 1-4 4"></path>
+    <path d="M12 13v5"></path>
+    <path d="M8 21h8"></path>
+    <path d="M9 18h6"></path>
+  </symbol>
+
+  <symbol id="icon-user" viewBox="0 0 24 24">
+    <circle cx="12" cy="8" r="4"></circle>
+    <path d="M4 21a8 8 0 0 1 16 0"></path>
+  </symbol>
+
+  <symbol id="icon-logout" viewBox="0 0 24 24">
+    <path d="M10 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h5"></path>
+    <path d="m14 8 4 4-4 4"></path>
+    <path d="M10 12h8"></path>
+  </symbol>
+
+  <symbol id="icon-close" viewBox="0 0 24 24">
+    <path d="m6 6 12 12"></path>
+    <path d="m18 6-12 12"></path>
+  </symbol>
+
+  <symbol id="icon-arrow-left" viewBox="0 0 24 24">
+    <path d="M19 12H5"></path>
+    <path d="m12 19-7-7 7-7"></path>
+  </symbol>
+
+  <symbol id="icon-circle" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="8"></circle>
+  </symbol>
+
+</svg>
+
+
+<!-- =======================================================
      APP SCREEN
 ======================================================= -->
 
 <div id="appScreen">
 
 
-  <!-- =====================================================
-       TOP BAR
-  ===================================================== -->
+<header class="topbar">
 
-  <header class="topbar">
+  <button
+    id="menuBtn"
+    class="menu-btn"
+    type="button"
+    aria-label="Open menu"
+  >
 
-
-    <button
-      id="menuBtn"
-      class="menu-btn"
-      type="button"
-      aria-label="Open menu"
+    <svg
+      class="ui-icon menu-icon"
+      aria-hidden="true"
     >
-      ☰
-    </button>
+      <use href="#icon-menu"></use>
+    </svg>
+
+  </button>
 
 
-    <div class="app-title">
-      MOODCHAT <span>💬</span>
+  <div class="app-title">
+
+    <svg
+      class="app-title-icon"
+      aria-hidden="true"
+    >
+      <use href="#icon-chat"></use>
+    </svg>
+
+    <span>
+      MOODCHAT
+    </span>
+
+  </div>
+
+
+  <button
+    id="topMood"
+    class="top-mood"
+    type="button"
+  >
+
+    <span id="topMoodText">
+      Choose mood
+    </span>
+
+  </button>
+
+
+  <button
+    id="profileBtn"
+    class="profile-btn"
+    type="button"
+    aria-label="Profile"
+  >
+
+    <img
+      id="topProfileAvatar"
+      src=""
+      alt="Profile"
+    >
+
+  </button>
+
+</header>
+
+
+<!-- =======================================================
+     MAIN
+======================================================= -->
+
+<main class="main">
+
+
+<!-- ===================================================
+     MOOD CHAT VIEW
+=================================================== -->
+
+<section
+  id="chatView"
+  class="view active"
+>
+
+
+  <div
+    id="chooseMoodScreen"
+    class="choose-mood"
+  >
+
+    <div class="choose-mood-card">
+
+      <div class="emoji">
+
+        <svg aria-hidden="true">
+          <use href="#icon-chat"></use>
+        </svg>
+
+      </div>
+
+      <h2>
+        Choose your mood
+      </h2>
+
+      <p>
+        Pick how you feel and enter the matching chat room.
+      </p>
+
+      <button
+        id="chooseMoodBtn"
+        class="choose-mood-btn"
+        type="button"
+      >
+        Choose Mood
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <div
+    id="moodChatContent"
+    class="hidden"
+  >
+
+    <div class="room-header">
+
+      <div class="room-info">
+
+        <div
+          id="roomTitle"
+          class="room-title"
+        >
+          Mood Chat
+        </div>
+
+        <div
+          id="roomSubtitle"
+          class="room-subtitle"
+        >
+          People feeling the same way
+        </div>
+
+      </div>
+
+      <div
+        id="onlineCount"
+        class="online-count"
+      >
+        0 online
+      </div>
+
     </div>
 
 
-    <button
-      id="topMood"
-      class="top-mood"
-      type="button"
+    <div
+      id="publicFeed"
+      class="feed"
     >
-      <span id="topMoodText">
-        Choose mood
+
+      <div class="empty-state">
+
+        <span class="emoji">
+
+          <svg aria-hidden="true">
+            <use href="#icon-message"></use>
+          </svg>
+
+        </span>
+
+        <strong>
+          No messages yet
+        </strong>
+
+        <span>
+          Start the conversation.
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <div
+      id="typingIndicator"
+      class="typing-indicator"
+    ></div>
+
+  </div>
+
+</section>
+
+
+<!-- ===================================================
+     MY MESSAGES
+=================================================== -->
+
+<section
+  id="messagesView"
+  class="view"
+>
+
+  <div class="section-card">
+
+    <div class="section-heading">
+
+      <svg
+        class="heading-icon"
+        aria-hidden="true"
+      >
+        <use href="#icon-message"></use>
+      </svg>
+
+      <span>
+        My Messages
       </span>
-    </button>
+
+    </div>
 
 
-    <button
-      id="profileBtn"
-      class="profile-btn"
-      type="button"
-      aria-label="Profile"
-    >
+    <div id="conversationsList">
 
-      <img
-        id="topProfileAvatar"
-        src=""
-        alt="Profile"
+      <div class="empty-state">
+
+        <span class="emoji">
+
+          <svg aria-hidden="true">
+            <use href="#icon-message"></use>
+          </svg>
+
+        </span>
+
+        <strong>
+          No private chats yet
+        </strong>
+
+        <span>
+          Tap a person to start a private chat.
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ===================================================
+     LIVE PEOPLE
+=================================================== -->
+
+<section
+  id="liveView"
+  class="view"
+>
+
+  <div class="section-card">
+
+    <div class="section-heading">
+
+      <svg
+        class="heading-icon"
+        aria-hidden="true"
       >
+        <use href="#icon-users"></use>
+      </svg>
 
-    </button>
+      <span>
+        Live People
+      </span>
 
-
-  </header>
-
-
-  <!-- =====================================================
-       MAIN
-  ===================================================== -->
-
-  <main class="main">
+    </div>
 
 
-    <!-- ===================================================
-         MOOD CHAT VIEW
-    =================================================== -->
-
-    <section
-      id="chatView"
-      class="view active"
+    <div
+      id="livePeopleGrid"
+      class="live-grid"
+      style="padding:12px;"
     >
 
+      <div class="empty-state">
 
-      <div
-        id="chooseMoodScreen"
-        class="choose-mood"
+        <span class="emoji">
+
+          <svg aria-hidden="true">
+            <use href="#icon-users"></use>
+          </svg>
+
+        </span>
+
+        <strong>
+          Nobody else is online
+        </strong>
+
+        <span>
+          Online people will appear here.
+        </span>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- ===================================================
+     LEADERBOARD
+=================================================== -->
+
+<section
+  id="leaderboardView"
+  class="view"
+>
+
+  <div class="section-card">
+
+    <div class="section-heading">
+
+      <svg
+        class="heading-icon"
+        aria-hidden="true"
       >
+        <use href="#icon-trophy"></use>
+      </svg>
 
-        <div class="choose-mood-card">
+      <span>
+        Leaderboard
+      </span>
 
-          <div class="emoji">
-            💬
-          </div>
-
-          <h2>
-            Choose your mood
-          </h2>
-
-          <p>
-            Pick how you feel and enter the matching chat room.
-          </p>
-
-          <button
-            id="chooseMoodBtn"
-            class="choose-mood-btn"
-            type="button"
-          >
-            Choose Mood
-          </button>
-
-        </div>
-
-      </div>
+    </div>
 
 
-      <div
-        id="moodChatContent"
-        class="hidden"
-      >
-
-        <div class="room-header">
-
-          <div class="room-info">
-
-            <div
-              id="roomTitle"
-              class="room-title"
-            >
-              Mood Chat
-            </div>
-
-            <div
-              id="roomSubtitle"
-              class="room-subtitle"
-            >
-              People feeling the same way
-            </div>
-
-          </div>
-
-
-          <div
-            id="onlineCount"
-            class="online-count"
-          >
-            0 online
-          </div>
-
-        </div>
-
-
-        <div
-          id="publicFeed"
-          class="feed"
-        >
-
-          <div class="empty-state">
-
-            <span class="emoji">
-              💬
-            </span>
-
-            <strong>
-              No messages yet
-            </strong>
-
-            <span>
-              Start the conversation.
-            </span>
-
-          </div>
-
-        </div>
-
-
-        <div
-          id="typingIndicator"
-          class="typing-indicator"
-        ></div>
-
-      </div>
-
-    </section>
-
-
-    <!-- ===================================================
-         MY MESSAGES
-    =================================================== -->
-
-    <section
-      id="messagesView"
-      class="view"
+    <div
+      id="leaderboardList"
+      class="leaderboard"
     >
 
-      <div class="section-card">
+      <div class="empty-state">
 
-        <div class="section-heading">
-          💬 My Messages
-        </div>
+        <span class="emoji">
 
+          <svg aria-hidden="true">
+            <use href="#icon-trophy"></use>
+          </svg>
 
-        <div id="conversationsList">
+        </span>
 
-          <div class="empty-state">
+        <strong>
+          No rankings yet
+        </strong>
 
-            <span class="emoji">
-              💬
-            </span>
-
-            <strong>
-              No private chats yet
-            </strong>
-
-            <span>
-              Tap a person to start a private chat.
-            </span>
-
-          </div>
-
-        </div>
+        <span>
+          Send messages to earn points.
+        </span>
 
       </div>
 
-    </section>
+    </div>
+
+  </div>
+
+</section>
 
 
-    <!-- ===================================================
-         LIVE PEOPLE
-    =================================================== -->
+<!-- ===================================================
+     PROFILE VIEW
+=================================================== -->
 
-    <section
-      id="liveView"
-      class="view"
+<section
+  id="profileView"
+  class="view"
+>
+
+  <div class="my-profile">
+
+
+    <img
+      id="myProfileAvatar"
+      class="my-profile-avatar"
+      src=""
+      alt="My profile"
     >
 
-      <div class="section-card">
 
-        <div class="section-heading">
-          🟢 Live People
-        </div>
-
-
-        <div
-          id="livePeopleGrid"
-          class="live-grid"
-          style="padding:12px;"
-        >
-
-          <div class="empty-state">
-
-            <span class="emoji">
-              🟢
-            </span>
-
-            <strong>
-              Nobody else is online
-            </strong>
-
-            <span>
-              Online people will appear here.
-            </span>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
-
-
-    <!-- ===================================================
-         LEADERBOARD
-    =================================================== -->
-
-    <section
-      id="leaderboardView"
-      class="view"
+    <label
+      class="profile-upload"
+      for="profileImageInput"
     >
 
-      <div class="section-card">
+      <svg aria-hidden="true">
+        <use href="#icon-camera"></use>
+      </svg>
 
-        <div class="section-heading">
-          🏆 Leaderboard
-        </div>
+      <span>
+        Change Photo
+      </span>
 
-
-        <div
-          id="leaderboardList"
-          class="leaderboard"
-        >
-
-          <div class="empty-state">
-
-            <span class="emoji">
-              🏆
-            </span>
-
-            <strong>
-              No rankings yet
-            </strong>
-
-            <span>
-              Send messages to earn points.
-            </span>
-
-          </div>
-
-        </div>
-
-      </div>
-
-    </section>
+    </label>
 
 
-    <!-- ===================================================
-         PROFILE VIEW
-    =================================================== -->
-
-    <section
-      id="profileView"
-      class="view"
+    <input
+      id="profileImageInput"
+      class="hidden-input"
+      type="file"
+      accept="image/*"
     >
 
-      <div class="my-profile">
+
+    <div
+      id="myProfileName"
+      class="my-profile-name"
+    >
+      User
+    </div>
 
 
-        <img
-          id="myProfileAvatar"
-          class="my-profile-avatar"
-          src=""
-          alt="My profile"
-        >
+    <div
+      id="myProfileEmail"
+      class="my-profile-email"
+    >
+      —
+    </div>
 
 
-        <label
-          class="profile-upload"
-          for="profileImageInput"
-        >
-          📷 Change Photo
-        </label>
+    <div
+      id="myProfileMood"
+      class="my-profile-mood"
+    >
+      Choose mood
+    </div>
 
 
-        <input
-          id="profileImageInput"
-          class="hidden-input"
-          type="file"
-          accept="image/*"
-        >
+    <div class="profile-details">
 
 
-        <div
-          id="myProfileName"
-          class="my-profile-name"
-        >
-          User
-        </div>
+      <div class="detail-box">
 
+        <span>
+          Username
+        </span>
 
-        <div
-          id="myProfileEmail"
-          class="my-profile-email"
+        <strong
+          id="profileUsername"
         >
           —
-        </div>
-
-
-        <div
-          id="myProfileMood"
-          class="my-profile-mood"
-        >
-          Choose mood
-        </div>
-
-
-        <div class="profile-details">
-
-
-          <div class="detail-box">
-
-            <span>
-              Username
-            </span>
-
-            <strong
-              id="profileUsername"
-            >
-              —
-            </strong>
-
-          </div>
-
-
-          <div class="detail-box">
-
-            <span>
-              Gender
-            </span>
-
-            <strong
-              id="profileGender"
-            >
-              —
-            </strong>
-
-          </div>
-
-
-          <div class="detail-box">
-
-            <span>
-              Points
-            </span>
-
-            <strong
-              id="profilePoints"
-            >
-              0
-            </strong>
-
-          </div>
-
-
-          <div class="detail-box">
-
-            <span>
-              Rank
-            </span>
-
-            <strong
-              id="profileRank"
-            >
-              —
-            </strong>
-
-          </div>
-
-
-        </div>
+        </strong>
 
       </div>
 
-    </section>
+
+      <div class="detail-box">
+
+        <span>
+          Gender
+        </span>
+
+        <strong
+          id="profileGender"
+        >
+          —
+        </strong>
+
+      </div>
 
 
-  </main>
+      <div class="detail-box">
+
+        <span>
+          Points
+        </span>
+
+        <strong
+          id="profilePoints"
+        >
+          0
+        </strong>
+
+      </div>
 
 
-  <!-- =====================================================
-       PUBLIC CHAT COMPOSER
-  ===================================================== -->
+      <div class="detail-box">
 
-  <div
-    id="publicComposer"
-    class="composer hidden"
-  >
+        <span>
+          Rank
+        </span>
 
-    <div class="composer-inner">
+        <strong
+          id="profileRank"
+        >
+          —
+        </strong>
 
-
-      <button
-        id="publicImageBtn"
-        class="icon-btn"
-        type="button"
-        aria-label="Send image"
-      >
-        📷
-      </button>
-
-
-      <input
-        id="publicImageInput"
-        class="hidden-input"
-        type="file"
-        accept="image/*"
-      >
-
-
-      <textarea
-        id="messageInput"
-        class="composer-input"
-        rows="1"
-        maxlength="1000"
-        placeholder="Say something..."
-      ></textarea>
-
-
-      <button
-        id="sendMessageBtn"
-        class="send-btn"
-        type="button"
-        aria-label="Send"
-      >
-        ➤
-      </button>
+      </div>
 
 
     </div>
 
   </div>
 
+</section>
+
+
+</main>
+
+
+<!-- =======================================================
+     PUBLIC CHAT COMPOSER
+======================================================= -->
+
+<div
+  id="publicComposer"
+  class="composer hidden"
+>
+
+  <div class="composer-inner">
+
+
+    <button
+      id="publicImageBtn"
+      class="icon-btn"
+      type="button"
+      aria-label="Send image"
+    >
+
+      <svg
+        class="ui-icon"
+        aria-hidden="true"
+      >
+        <use href="#icon-camera"></use>
+      </svg>
+
+    </button>
+
+
+    <input
+      id="publicImageInput"
+      class="hidden-input"
+      type="file"
+      accept="image/*"
+    >
+
+
+    <textarea
+      id="messageInput"
+      class="composer-input"
+      rows="1"
+      maxlength="1000"
+      placeholder="Say something..."
+    ></textarea>
+
+
+    <button
+      id="sendMessageBtn"
+      class="send-btn"
+      type="button"
+      aria-label="Send"
+    >
+
+      <svg
+        class="ui-icon"
+        aria-hidden="true"
+      >
+        <use href="#icon-send"></use>
+      </svg>
+
+    </button>
+
+
+  </div>
 
 </div>
 
@@ -3372,7 +3560,6 @@ body.dark-mode .logout-side:hover{
 
 
   <div class="drawer-top">
-
 
     <img
       id="drawerAvatar"
@@ -3407,9 +3594,15 @@ body.dark-mode .logout-side:hover{
       type="button"
       aria-label="Close menu"
     >
-      ✕
-    </button>
 
+      <svg
+        class="ui-icon"
+        aria-hidden="true"
+      >
+        <use href="#icon-close"></use>
+      </svg>
+
+    </button>
 
   </div>
 
@@ -3426,7 +3619,9 @@ body.dark-mode .logout-side:hover{
   >
 
     <span class="nav-icon">
-      💬
+      <svg aria-hidden="true">
+        <use href="#icon-chat"></use>
+      </svg>
     </span>
 
     <span>
@@ -3443,7 +3638,9 @@ body.dark-mode .logout-side:hover{
   >
 
     <span class="nav-icon">
-      ✉️
+      <svg aria-hidden="true">
+        <use href="#icon-message"></use>
+      </svg>
     </span>
 
     <span>
@@ -3467,7 +3664,9 @@ body.dark-mode .logout-side:hover{
   >
 
     <span class="nav-icon">
-      🟢
+      <svg aria-hidden="true">
+        <use href="#icon-users"></use>
+      </svg>
     </span>
 
     <span>
@@ -3484,7 +3683,9 @@ body.dark-mode .logout-side:hover{
   >
 
     <span class="nav-icon">
-      🏆
+      <svg aria-hidden="true">
+        <use href="#icon-trophy"></use>
+      </svg>
     </span>
 
     <span>
@@ -3501,7 +3702,9 @@ body.dark-mode .logout-side:hover{
   >
 
     <span class="nav-icon">
-      👤
+      <svg aria-hidden="true">
+        <use href="#icon-user"></use>
+      </svg>
     </span>
 
     <span>
@@ -3523,7 +3726,9 @@ body.dark-mode .logout-side:hover{
   >
 
     <span class="nav-icon">
-      🚪
+      <svg aria-hidden="true">
+        <use href="#icon-logout"></use>
+      </svg>
     </span>
 
     <span>
@@ -3564,6 +3769,8 @@ body.dark-mode .logout-side:hover{
   <div class="mood-grid">
 
 
+    <!-- FLIRTY -->
+
     <button
       class="mood-option"
       data-mood="flirty"
@@ -3571,7 +3778,12 @@ body.dark-mode .logout-side:hover{
     >
 
       <span class="big">
-        😍
+
+        <img
+          src="flirty.png"
+          alt="Flirty mood"
+        >
+
       </span>
 
       <strong>
@@ -3585,6 +3797,8 @@ body.dark-mode .logout-side:hover{
     </button>
 
 
+    <!-- SAD -->
+
     <button
       class="mood-option"
       data-mood="sad"
@@ -3592,7 +3806,12 @@ body.dark-mode .logout-side:hover{
     >
 
       <span class="big">
-        😭
+
+        <img
+          src="sad.png"
+          alt="Sad mood"
+        >
+
       </span>
 
       <strong>
@@ -3606,6 +3825,8 @@ body.dark-mode .logout-side:hover{
     </button>
 
 
+    <!-- VEXED -->
+
     <button
       class="mood-option"
       data-mood="vexed"
@@ -3613,7 +3834,12 @@ body.dark-mode .logout-side:hover{
     >
 
       <span class="big">
-        😡
+
+        <img
+          src="vexed.png"
+          alt="Vexed mood"
+        >
+
       </span>
 
       <strong>
@@ -3627,6 +3853,8 @@ body.dark-mode .logout-side:hover{
     </button>
 
 
+    <!-- HAPPY -->
+
     <button
       class="mood-option"
       data-mood="happy"
@@ -3634,7 +3862,12 @@ body.dark-mode .logout-side:hover{
     >
 
       <span class="big">
-        🥳
+
+        <img
+          src="happy.png"
+          alt="Happy mood"
+        >
+
       </span>
 
       <strong>
@@ -3648,6 +3881,8 @@ body.dark-mode .logout-side:hover{
     </button>
 
 
+    <!-- BORED -->
+
     <button
       class="mood-option"
       data-mood="bored"
@@ -3655,7 +3890,12 @@ body.dark-mode .logout-side:hover{
     >
 
       <span class="big">
-        😴
+
+        <img
+          src="bored.png"
+          alt="Bored mood"
+        >
+
       </span>
 
       <strong>
@@ -3669,6 +3909,8 @@ body.dark-mode .logout-side:hover{
     </button>
 
 
+    <!-- HEARTBROKEN -->
+
     <button
       class="mood-option"
       data-mood="heartbroken"
@@ -3676,7 +3918,12 @@ body.dark-mode .logout-side:hover{
     >
 
       <span class="big">
-        💔
+
+        <img
+          src="heartbroken.png"
+          alt="Heartbroken mood"
+        >
+
       </span>
 
       <strong>
@@ -3707,7 +3954,6 @@ body.dark-mode .logout-side:hover{
 
   <div class="profile-head">
 
-
     <img
       id="popoverProfileAvatar"
       class="profile-big-avatar"
@@ -3730,7 +3976,6 @@ body.dark-mode .logout-side:hover{
     >
       @user
     </div>
-
 
   </div>
 
@@ -3807,7 +4052,14 @@ body.dark-mode .logout-side:hover{
       type="button"
       aria-label="Back"
     >
-      ←
+
+      <svg
+        class="ui-icon"
+        aria-hidden="true"
+      >
+        <use href="#icon-arrow-left"></use>
+      </svg>
+
     </button>
 
 
@@ -3848,7 +4100,6 @@ body.dark-mode .logout-side:hover{
 
     </div>
 
-
   </div>
 
 
@@ -3860,7 +4111,11 @@ body.dark-mode .logout-side:hover{
     <div class="empty-state">
 
       <span class="emoji">
-        💬
+
+        <svg aria-hidden="true">
+          <use href="#icon-message"></use>
+        </svg>
+
       </span>
 
       <strong>
@@ -3898,7 +4153,14 @@ body.dark-mode .logout-side:hover{
       type="button"
       aria-label="Send image"
     >
-      📷
+
+      <svg
+        class="ui-icon"
+        aria-hidden="true"
+      >
+        <use href="#icon-camera"></use>
+      </svg>
+
     </button>
 
 
@@ -3925,12 +4187,18 @@ body.dark-mode .logout-side:hover{
       type="button"
       aria-label="Send private message"
     >
-      ➤
+
+      <svg
+        class="ui-icon"
+        aria-hidden="true"
+      >
+        <use href="#icon-send"></use>
+      </svg>
+
     </button>
 
 
   </div>
-
 
 </div>
 
